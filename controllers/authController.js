@@ -9,6 +9,7 @@ const generateRefreshToken = (user) => {
     return jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' });
 };
 
+
 exports.register = async (req, res) => {
     const { username, password } = req.body;
     try {
@@ -20,6 +21,7 @@ exports.register = async (req, res) => {
         res.status(500).json({ message: 'Error registering user', error });
     }
 };
+
 
 exports.login = async (req, res) => {
     const { username, password } = req.body;
@@ -37,6 +39,7 @@ exports.login = async (req, res) => {
         res.status(500).json({ message: 'Error logging in', error });
     }
 };
+
 
 exports.token = async (req, res) => {
     const { refreshToken } = req.body;
