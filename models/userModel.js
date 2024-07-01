@@ -3,13 +3,13 @@ const bcrypt = require('bcryptjs');
 
 
 const userSchema = new Schema({
-  /*
+  
     email: {
       type: String,
-      unique: [true, "email already exists in database!"],
+      unique: [true, "email already registered!"],
       lowercase: true,
       trim: true,
-      required: [true, "email not provided"],
+      required: [true, "email is required"],
       validate: {
         validator: function (v) {
           return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -17,13 +17,19 @@ const userSchema = new Schema({
         message: '{VALUE} is not a valid email!'
       }
   
-    },*/
+    },
     password: {
       type: Object,
+      required: [true, "password is required"],
     },
     username: {
-        type: String,
-        required: true,
+      type: String,
+      required: [true, "username is required"],
+    },
+    account_type: {
+      type: String,
+      enum: ["buyer","seller"],
+      default: "buyer"
     },
  
     // PROVIDER AND GOOGLE ID....
@@ -40,12 +46,22 @@ const userSchema = new Schema({
         default: 0,
     },
 
+    shop: {
+      type:mongoose.Schema.Types.ObjectId, ref: 'Shop'
+    },
+
     likes: [{
-        type:mongoose.Schema.Types.ObjectId, ref: 'Product'
+      type:mongoose.Schema.Types.ObjectId, ref: 'Product'
     }],
 
+    phone: {
+      type: String,
+      required: [true, "phone is required"],
+      unique: [true, "phone already registered!"],
+    },
+
     profile: {
-      whatsapp: String,
+      // whatsapp: String,
       socials: [{
         type: String,
       }],

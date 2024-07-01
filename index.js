@@ -5,14 +5,18 @@ const http = require('http');
 const cors = require("cors");
 const path = require('path');
 const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 
 
-
-
-
+// Configure CORS
+const corsOptions = {
+  origin: 'http://localhost:8080', // Specify your frontend URL
+  credentials: true // Enable credentials
+};
 
 // Use the cors middleware with options to specify the allowed origin [----DO NOT REMOVE FRPM HERE----]
-app.use(cors());
+app.use(cors(corsOptions));
 
 
 // CONFIGURE HANDLEBARS FOR DYNAMIC EMAIL TEMPLATING..
@@ -41,6 +45,12 @@ const productRoutes = require("./routes/productRoutes");
 const shopRoutes = require("./routes/shopRoutes");
 const userRoutes = require("./routes/userRoutes");
 
+// Middleware
+app.use(bodyParser.json());
+app.use(cookieParser());
+
+// Serve static files from the 'public' directory
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
 // USE ROUTES HERE....
 app.use('/api', authRoutes);

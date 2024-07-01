@@ -3,7 +3,8 @@ const router = express.Router();
 const authController = require('../controllers/authController');
 const { protect } = require('../middlewares/authMiddleware');
 
-router.post('/register', authController.register);
+router.post('/register/primary', authController.register);
+router.post('/register/secondary', authController.registerSeller);
 router.post('/login', authController.login);
 router.post('/token', authController.token);
 router.post('/logout', authController.logout);
