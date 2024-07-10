@@ -56,8 +56,9 @@ app.use('/images', express.static(path.join(__dirname, 'public/images')));
 app.use('/api', authRoutes);
 // app.use('/api', invoiceRoutes);
 // app.use('/api', notificationRoutes);
-// app.use('/api', productRoutes);
+app.use('/api/products', productRoutes);
 app.use('/api', shopRoutes);
+app.use('/uploads',  express.static('uploads'));
 // app.use('/api', userRoutes);
 
 app.get('/', function(req, res){

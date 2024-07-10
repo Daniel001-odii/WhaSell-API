@@ -77,7 +77,7 @@ const userSchema = new Schema({
 
     subscription:{
         type: String,
-        enum: ["basic", "premium"],
+        enum: ["basic", "standard", "premium"],
         default: "basic",
     },
 
