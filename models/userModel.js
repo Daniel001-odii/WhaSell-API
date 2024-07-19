@@ -61,10 +61,14 @@ const userSchema = new Schema({
     },
 
     profile: {
-      // whatsapp: String,
-      socials: [{
-        type: String,
-      }],
+      whatsapp: String,
+      socials: {
+        whatsapp: String,
+        youtube: String,
+        facebook: String,
+        instagram: String,
+        twitter: String,
+      },
       image_url: {type: String, default: 'https://icon-library.com/images/no-profile-pic-icon/no-profile-pic-icon-11.jpg'},
       },
 
@@ -73,6 +77,12 @@ const userSchema = new Schema({
     email_verified: {
       type: Boolean,
       default: false,
+    },
+
+    location: {
+      state: String,
+      LGA: String,
+      address: String,
     },
 
     subscription:{

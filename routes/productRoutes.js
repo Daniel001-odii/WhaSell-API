@@ -14,5 +14,7 @@ router.post('/new', protect, productController.createProduct);
 
 router.post('/image', productController.uploadProductImages);
 
+// get shop products by shop id...
+router.get('/:shop_id/shop', productController.getProductsByShopId);
 
 module.exports = router;

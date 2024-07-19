@@ -5,7 +5,9 @@ const Product = require('../models/productModel');
 const Notification = require('../models/notificationModel');
 
 const multer = require('multer');
+
 const upload = require('../utils/uploadConfig');
+const product_image_upload = require('../utils/uploadConfig');
 
 // Set up multer storage configuration
 const storage = multer.diskStorage({
@@ -67,7 +69,7 @@ exports.getAllProducts = async (req, res) => {
 exports.getProductById = async (req, res) => {
     try{
         const product_id = req.params.product_id;
-        const product = await Product.findById(product_id).populate("shop");
+        const product = await Product.findById(product_id);
 
         // increment product views..
         product.views += 1;
@@ -78,8 +80,6 @@ exports.getProductById = async (req, res) => {
         res.status(500).json({ message: 'internal server error'});
     }
 }
-
-
 
 // controller to upload product
 exports.newProduct = async (req, res) => {
@@ -121,7 +121,7 @@ exports.createProduct = async (req, res) => {
         const user = await User.findById(user_id).populate();
 
       // Handle image upload
-      upload.array('images', 10)(req, res, async function (err) {
+      product_image_upload.array('product-images', 10)(req, res, async function (err) {
         if (err) {
           return res.status(400).json({ error: 'Image upload failed', err });
         } else {
@@ -134,7 +134,7 @@ exports.createProduct = async (req, res) => {
         // }
   
         // Prepare image URLs
-        const images = req.files.map(file => file.path);
+        const images = req.files.map(file => (__dirname, file.path));
   
         // Create a new product
         const newProduct = new Product({
@@ -159,4 +159,24 @@ exports.createProduct = async (req, res) => {
     } catch (error) {
       res.status(500).json({ error: 'Server error' });
     }
-  };
+};
+
+// get products by shop id..
+exports.getProductsByShopId = async (req, res) => {
+    try{
+        const shop_id = req.params.shop_id;
+        const shop = await Shop.findById(shop_id);
+        if(!shop){
+            res.status(404).json({ message: "shop not found"});
+        }
+
+        const products = await Product.find({ shop: shop_id })
+        res.status(200).json({ products });
+
+    }catch(error){
+        res.status(500).json({ message: 'internal server error'});
+        console.log("error getting products by shop id: ", error);
+    }
+}
+
+// Get similar items.. if not get every other items...

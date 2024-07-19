@@ -33,8 +33,12 @@ const shopSchema = new Schema({
     followers: [{
         type: mongoose.Schema.Types.ObjectId, ref: 'User'
     }], 
+    followers_count: Number,
     reviews:{
-        rating: Number,
+        rating: {
+            type: Number,
+            default: 0,
+        },
         count: Number,
     },
     views: {
@@ -45,8 +49,9 @@ const shopSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId, ref: 'User'
     },
     products: {
-        type: mongoose.Schema.Types.ObjectId, ref: 'Product'
+        type: Array,
     },
+    listings: Number,
     profile: {
         image_url: {type: String, default: 'https://icon-library.com/images/no-profile-pic-icon/no-profile-pic-icon-11.jpg'},
         location: {

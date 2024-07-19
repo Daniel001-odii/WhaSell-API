@@ -61,6 +61,14 @@ exports.getShopByShopname = async (req, res) => {
 
         // Find the shop by name (ensure name is stored in lowercase in the database)
         const shop = await Shop.findOne({ name: name });
+        const shop_id = shop._id;
+
+        // find all products belonging to shop...
+        const products = await Product.find({ shop: shop_id });
+        shop.products = products;
+        shop.listings = products.length;
+        // followers count...
+        shop.followers_count = shop.followers.length;
 
         if (!shop) {
             return res.status(404).json({ success: false, message: "Shop not found, please check spelling." });
@@ -72,6 +80,30 @@ exports.getShopByShopname = async (req, res) => {
         console.log("Error getting shop: ", error);
     }
 };
+
+exports.getShopById = async(req, res) => {
+    try{
+        const shop_id = req.params.shop_id;
+        const shop = await Shop.findById(shop_id);
+
+        // find all products belonging to shop...
+        const products = await Product.find({ shop: shop_id });
+        shop.products = products;
+        shop.listings = products.length;
+        // followers count...
+        shop.followers_count = shop.followers.length;
+
+
+        if(!shop){
+            return res.status(404).json({ success: false, message: "Shop not found" });
+        }
+
+        res.status(200).json({ shop });
+    }catch(error){
+        console.log("error getting shop: ", error)
+        res.status(500).json({ message: 'internal server error'});
+    }
+}
 
 // EDIT SHOP...
 exports.editShop = async (req, res) => {
@@ -136,7 +168,12 @@ exports.followStore = async (req, res) => {
 
         // Check if the user is already following the shop
         if (shop.followers.includes(user_id)) {
-            return res.status(400).json({ success: false, message: "You are already following this shop" });
+            const user_index = shop.followers.indexOf(user_id);
+            if(user_index > -1){
+                shop.followers.splice(user_index, 1);
+            }
+            await shop.save();
+            return res.status(201).json({ success: true, message: "You unfollowed this shop" });
         }
 
         // also dont allow shop owners to follow their own store...

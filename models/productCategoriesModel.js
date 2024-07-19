@@ -18,9 +18,9 @@ const productCategorySchema = new Schema({
             "Sports & Outdoors",
             "Grocery & Gourmet Food",
             "Baby Products",
-            "Travel & Luggage"
+            "Travel & Luggage",
+            "other",
         ],
-        required: [true, "product category is required"],
     }
 });
 

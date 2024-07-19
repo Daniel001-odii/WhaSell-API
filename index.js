@@ -39,6 +39,7 @@ app.use(express.urlencoded({
 
 // IMPORT ALL ROUTE FILES HERE....
 const authRoutes = require("./routes/authRoutes");
+const categoriesRoutes = require("./routes/categoriesRoutes");
 const invoiceRoutes = require("./routes/invoiceRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const productRoutes = require("./routes/productRoutes");
@@ -54,15 +55,19 @@ app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
 // USE ROUTES HERE....
 app.use('/api', authRoutes);
+app.use('/api', userRoutes);
 // app.use('/api', invoiceRoutes);
 // app.use('/api', notificationRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api', shopRoutes);
+app.use('/api', categoriesRoutes);
+
 app.use('/uploads',  express.static('uploads'));
+app.use('/uploads',  express.static('product-images'));
 // app.use('/api', userRoutes);
 
 app.get('/', function(req, res){
-  return res.send("Apex-tek API is live...")
+  return res.send("whatsell API is live...")
 })
 
 

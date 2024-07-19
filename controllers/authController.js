@@ -150,12 +150,20 @@ exports.token = async (req, res) => {
             }
             const accessToken = generateAccessToken(user);
             res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, maxAge: 15 * 60 * 1000 });
-            res.json({ accessToken });
+            res.status(200).json({ message: 'your session has been restored', accessToken });
         });
     } catch (error) {
         res.status(500).json({ message: 'Error refreshing token', error });
     }
 };
+
+exports.checkCurrentUser = async (req, res) => {
+    try{
+        
+    }catch(error){
+        res.status(500).json({ message: "internal server error"});
+    }
+}
 
 
 exports.logout = async (req, res) => {
