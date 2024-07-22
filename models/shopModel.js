@@ -4,7 +4,7 @@ const shopSchema = new Schema({
     name: {
         type: String,
         required: true,
-        set: value => value.toLowerCase() // Ensure the name is stored in lowercase
+        set: value => value.toLowerCase().split(" ").join("") // Ensure the name is stored in lowercase
     },
     description: {
         type: String,
@@ -12,22 +12,6 @@ const shopSchema = new Schema({
     },
     category: {
         type: String,
-        enum: [
-            "electronics",
-            "furniture",
-            "clothing & textile",
-            "fashion & beauty",
-            "health",
-            "tools & industrial",
-            "arts & crafts",
-            "footwears",
-            "phone & telecoms", 
-            "accessories", 
-            "phones",
-            "baby, kids & toys",
-            "drinks & groceries",
-            "other"
-        ],
     },
 
     followers: [{

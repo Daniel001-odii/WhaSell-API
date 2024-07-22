@@ -61,6 +61,11 @@ exports.getShopByShopname = async (req, res) => {
 
         // Find the shop by name (ensure name is stored in lowercase in the database)
         const shop = await Shop.findOne({ name: name });
+        if (!shop) {
+            return res.status(404).json({ success: false, message: "Shop not found, please check spelling." });
+        }
+
+        
         const shop_id = shop._id;
 
         // find all products belonging to shop...
@@ -70,9 +75,7 @@ exports.getShopByShopname = async (req, res) => {
         // followers count...
         shop.followers_count = shop.followers.length;
 
-        if (!shop) {
-            return res.status(404).json({ success: false, message: "Shop not found, please check spelling." });
-        }
+        
 
         res.status(200).json({ success: true, shop });
     } catch (error) {
@@ -108,6 +111,10 @@ exports.getShopById = async(req, res) => {
 // EDIT SHOP...
 exports.editShop = async (req, res) => {
     try {
+        const form = req.body;
+        console.log("from client: ", form);
+
+
         const shop_id = req.params.shop_id;
         let shop = await Shop.findById(shop_id);
 
@@ -115,15 +122,7 @@ exports.editShop = async (req, res) => {
             name,
             description,
             category,
-            profile: {
-                location: {
-                    city,
-                    LGA,
-                    state,
-                    address,
-                },
-                phone,
-            },
+            profile
         } = req.body;
 
         if (!shop) {
@@ -134,11 +133,13 @@ exports.editShop = async (req, res) => {
         if (name) shop.name = name;
         if (description) shop.description = description;
         if (category) shop.category = category;
-        if(shop.profile){
-            if (city) shop.profile.location.city = city;
-            if (LGA) shop.profile.location.LGA = LGA;
-            if (state) shop.profile.location.state = state;
-            if (address) shop.profile.location.address = address;
+        if(profile){
+            if(profile.location){
+                if (city) shop.profile.location.city = city;
+                if (LGA) shop.profile.location.LGA = LGA;
+                if (state) shop.profile.location.state = state;
+                if (address) shop.profile.location.address = address;
+            }
             if (phone) shop.profile.phone = phone;
         }
         
