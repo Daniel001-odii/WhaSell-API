@@ -11,7 +11,7 @@ const cookieParser = require('cookie-parser');
 
 // Configure CORS
 const corsOptions = {
-  origin: 'http://localhost:8080', // Specify your frontend URL
+  origin: ['http://localhost:8080', 'https://wha-sell.vercel.app'],// Specify your frontend URL
   credentials: true // Enable credentials
 };
 
