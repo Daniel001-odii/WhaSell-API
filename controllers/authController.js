@@ -122,24 +122,24 @@ exports.login = async (req, res) => {
         await user.save();
 
         // Save tokens to cookies
-        res.cookie('accessToken', accessToken, { 
-            maxAge: 15 * 60 * 1000, 
-            secure: true, 
-            sameSite: 'None',
-            domain: 'https://whasell.onrender.com',
-            expires: new Date(Date.now() + 900000), // 15 minutes
-        });
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'Lax', // or 'Strict' or 'None' based on your requirement
+            maxAge: 15 * 60 * 1000,
+            domain: 'onrender.com', // set this to your domain
+            path: '/', // make sure this is correct
+          });
 
-        res.cookie('refreshToken', refreshToken, { 
-            maxAge: 7 * 24 * 60 * 60 * 1000, 
-            secure: true, 
-            sameSite: 'None',
-            domain: 'https://whasell.onrender.com',
-            expires: new Date(Date.now() + 900000), // 15 minutes
-        });
 
-        // res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, maxAge: 15 * 60 * 1000 });
-        // res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+          res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'Lax', // or 'Strict' or 'None' based on your requirement
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            domain: 'onrender.com', // set this to your domain
+            path: '/', // make sure this is correct
+          });
 
 
         // Respond with success message
