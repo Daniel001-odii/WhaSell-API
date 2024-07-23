@@ -125,20 +125,16 @@ exports.login = async (req, res) => {
         res.cookie('accessToken', accessToken, { 
             maxAge: 15 * 60 * 1000, 
             secure: true, 
-            httpOnly: true,
-            sameSite: 'Strict',
+            sameSite: 'None',
             domain: 'onrender.com',
-            path: '/',
             expires: new Date(Date.now() + 900000), // 15 minutes
         });
 
         res.cookie('refreshToken', refreshToken, { 
             maxAge: 7 * 24 * 60 * 60 * 1000, 
             secure: true, 
-            httpOnly: true,
-            sameSite: 'Strict',
+            sameSite: 'None',
             domain: 'onrender.com',
-            path: '/',
             expires: new Date(Date.now() + 900000), // 15 minutes
         });
 
