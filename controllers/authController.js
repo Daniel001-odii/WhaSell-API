@@ -122,8 +122,8 @@ exports.login = async (req, res) => {
         await user.save();
 
         // Save tokens to cookies
-        res.cookie('accessToken', accessToken, { maxAge: 15 * 60 * 1000 });
-        res.cookie('refreshToken', refreshToken, { maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.cookie('accessToken', accessToken, { maxAge: 15 * 60 * 1000, secure: true, sameSite: 'Strict' });
+        res.cookie('refreshToken', refreshToken, { maxAge: 7 * 24 * 60 * 60 * 1000, secure: true, sameSite: 'Strict' });
 
         // res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, maxAge: 15 * 60 * 1000 });
         // res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
