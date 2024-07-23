@@ -17,7 +17,9 @@ const corsOptions = {
 
 // Use the cors middleware with options to specify the allowed origin [----DO NOT REMOVE FRPM HERE----]
 app.use(cors(corsOptions));
-
+// Middleware
+app.use(bodyParser.json());
+app.use(cookieParser());
 
 // CONFIGURE HANDLEBARS FOR DYNAMIC EMAIL TEMPLATING..
 const exphbs = require('express-handlebars');
@@ -46,9 +48,7 @@ const productRoutes = require("./routes/productRoutes");
 const shopRoutes = require("./routes/shopRoutes");
 const userRoutes = require("./routes/userRoutes");
 
-// Middleware
-app.use(bodyParser.json());
-app.use(cookieParser());
+
 
 // Serve static files from the 'public' directory
 app.use('/images', express.static(path.join(__dirname, 'public/images')));

@@ -126,7 +126,7 @@ exports.login = async (req, res) => {
             maxAge: 15 * 60 * 1000, 
             secure: true, 
             sameSite: 'None',
-            domain: 'onrender.com',
+            domain: 'https://whasell.onrender.com',
             expires: new Date(Date.now() + 900000), // 15 minutes
         });
 
@@ -134,7 +134,7 @@ exports.login = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000, 
             secure: true, 
             sameSite: 'None',
-            domain: 'onrender.com',
+            domain: 'https://whasell.onrender.com',
             expires: new Date(Date.now() + 900000), // 15 minutes
         });
 
