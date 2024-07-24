@@ -15,9 +15,9 @@ const Notification = require("../models/notificationModel")
 exports.createNewShop = async (req, res) => {
     try {
         // get shop name and description via request body
-        const { name, description } = req.body;
+        const { name, description, category } = req.body;
         console.log("from client :", req.body);
-        
+
         const shop_name = name.split(" ").join("-");
 
         // get shop owner via request param
@@ -36,6 +36,7 @@ exports.createNewShop = async (req, res) => {
             owner,
             name: shop_name,
             description,
+            category,
         });
         await shop.save();
 
