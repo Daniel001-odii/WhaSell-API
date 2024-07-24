@@ -16,6 +16,8 @@ exports.createNewShop = async (req, res) => {
     try {
         // get shop name and description via request body
         const { name, description } = req.body;
+        console.log("from client :", req.body);
+        
         const shop_name = name.split(" ").join("-");
 
         // get shop owner via request param
@@ -40,6 +42,9 @@ exports.createNewShop = async (req, res) => {
         // save shop to userDb...
         const user = await User.findById(owner);
         user.shop = shop;
+
+        // change user account type to seller...
+        user.account_type = "seller";
         await user.save();
 
         console.log("request body: ", req.body);
