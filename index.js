@@ -63,7 +63,7 @@ app.use('/api', shopRoutes);
 app.use('/api', categoriesRoutes);
 
 app.use('/uploads',  express.static('uploads'));
-app.use('/uploads',  express.static('product-images'));
+app.use('/product-images',  express.static('product-images'));
 // app.use('/api', userRoutes);
 
 app.get('/', function(req, res){

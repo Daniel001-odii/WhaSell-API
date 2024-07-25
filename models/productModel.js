@@ -46,10 +46,10 @@ const productSchema = new Schema({
     condition: {
         type: String,
         enum: [
-            "Brand new",
-            "Refurbished",
-            "Refurbished by Manufacturer",
-            "Fairly used"
+            "brand new",
+            "refurbished",
+            "refurbished by manufacturer",
+            "fairly used"
         ],
         required: [true, "product condition is required"],
     },

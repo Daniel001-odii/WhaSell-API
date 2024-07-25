@@ -7,7 +7,7 @@ const Notification = require('../models/notificationModel');
 const multer = require('multer');
 
 const upload = require('../utils/uploadConfig');
-const product_image_upload = require('../utils/uploadConfig');
+const { productImageUpload } = require('../utils/uploadConfig');
 
 // Set up multer storage configuration
 const storage = multer.diskStorage({
@@ -77,6 +77,7 @@ exports.getProductById = async (req, res) => {
 
         res.status(200).json({ product });
     }catch(error){
+        console.log("error getting product: ", error);
         res.status(500).json({ message: 'internal server error'});
     }
 }
@@ -121,7 +122,7 @@ exports.createProduct = async (req, res) => {
         const user = await User.findById(user_id).populate();
 
       // Handle image upload
-      product_image_upload.array('product-images', 10)(req, res, async function (err) {
+      productImageUpload.array('product_images')(req, res, async function (err) {
         if (err) {
           return res.status(400).json({ error: 'Image upload failed', err });
         } else {
@@ -157,7 +158,8 @@ exports.createProduct = async (req, res) => {
         }
       });
     } catch (error) {
-      res.status(500).json({ error: 'Server error' });
+        console.log("error uploading product: ", error);
+        res.status(500).json({ message: "internal server error" });
     }
 };
 

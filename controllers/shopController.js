@@ -9,6 +9,37 @@ const Product = require("../models/productModel");
 const User = require("../models/userModel");
 const Notification = require("../models/notificationModel")
 
+const { shopImageUpload } = require("../utils/uploadConfig");
+
+
+// Controller to change shop profile image
+exports.changeShopImage = async (req, res) => {
+    try {
+      // Using multer middleware to handle file upload
+      shopImageUpload.single('shop_image')(req, res, async function (err) {
+        if (err) {
+          return res.status(400).json({ error: 'Image upload failed', err });
+        }
+  
+        const shop_id = req.params.shop_id;
+        const shop = await Shop.findById(shop_id);
+  
+        if (!shop) {
+          return res.status(404).json({ error: 'Shop not found' });
+        }
+  
+        const image = req.file.path;
+  
+        shop.profile.image_url = image;
+        await shop.save();
+  
+        res.status(201).json({ message: "Shop image changed successfully!", image });
+      });
+    } catch (error) {
+      console.log("Shop image upload error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  };
 
 
 // CREATE A NEW SHOP...
