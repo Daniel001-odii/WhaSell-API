@@ -11,6 +11,7 @@ const Notification = require("../models/notificationModel")
 
 const { shopImageUpload } = require("../utils/uploadConfig");
 
+const getFullUrl = require('../utils/getFullPath');
 
 // Controller to change shop profile image
 exports.changeShopImage = async (req, res) => {
@@ -28,9 +29,10 @@ exports.changeShopImage = async (req, res) => {
           return res.status(404).json({ error: 'Shop not found' });
         }
   
-        const image = req.file.path;
+        const imagePath = req.file.path;
+        const imageFullUrl = getFullUrl(req, imagePath);
   
-        shop.profile.image_url = image;
+        shop.profile.image_url = imageFullUrl;
         await shop.save();
   
         res.status(201).json({ message: "Shop image changed successfully!", image });

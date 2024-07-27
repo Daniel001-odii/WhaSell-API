@@ -22,6 +22,7 @@ const storage = multer.diskStorage({
 const jimp = require('jimp');
 const watermark = require('jimp-watermark');
 
+const getFullUrl = require('../utils/getFullPath');
 
 // Create a multer instance with the storage configuration
 // const upload = multer({ storage: storage });
@@ -120,11 +121,12 @@ exports.newProduct = async (req, res) => {
 }
 
 
+
 // Function to add watermark
 const addWatermark = async (filePath, full_text) => {
     try {
       const image = await jimp.read(filePath);
-      const font = await jimp.loadFont(jimp.FONT_SANS_32_WHITE); // Load a white font
+      const font = await jimp.loadFont(jimp.FONT_SANS_16_WHITE); // Load a white font
   
       // Create a separate text image with the watermark
       const textImage = new jimp(image.bitmap.width, image.bitmap.height);
@@ -133,7 +135,7 @@ const addWatermark = async (filePath, full_text) => {
         0,
         0,
         {
-          text: `${full_text}`,
+          text: `${full_text} posted on whatsell.com`,
           alignmentX: jimp.HORIZONTAL_ALIGN_CENTER,
           alignmentY: jimp.VERTICAL_ALIGN_MIDDLE,
         },
@@ -180,7 +182,8 @@ exports.createProduct = async (req, res) => {
         }
   
         // Prepare image URLs
-        const images = req.files.map(file => (__dirname, file.path));
+        // const images = req.files.map(file => (__dirname, file.path));
+        const images = req.files.map(file => getFullUrl(req, file.path));
   
         // Create a new product
         const newProduct = new Product({
