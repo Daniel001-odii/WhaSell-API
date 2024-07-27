@@ -35,7 +35,7 @@ exports.changeShopImage = async (req, res) => {
         shop.profile.image_url = imageFullUrl;
         await shop.save();
   
-        res.status(201).json({ message: "Shop image changed successfully!", image });
+        res.status(201).json({ message: "Shop image changed successfully!", imageFullUrl });
       });
     } catch (error) {
       console.log("Shop image upload error:", error);

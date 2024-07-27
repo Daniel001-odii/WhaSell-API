@@ -38,7 +38,9 @@ const shopSchema = new Schema({
     },
     listings: Number,
     profile: {
-        image_url: {type: String, default: 'https://icon-library.com/images/no-profile-pic-icon/no-profile-pic-icon-11.jpg'},
+        image_url: {
+            type: String, 
+            default: 'https://raw.githubusercontent.com/Daniel001-odii/aiCoaches/main/images/no_shop_image.png'},
         location: {
             city: String,
             LGA: String,

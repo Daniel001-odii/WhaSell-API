@@ -69,7 +69,9 @@ const userSchema = new Schema({
         instagram: String,
         twitter: String,
       },
-      image_url: {type: String, default: 'https://icon-library.com/images/no-profile-pic-icon/no-profile-pic-icon-11.jpg'},
+      image_url: {
+        type: String, 
+        default: 'https://raw.githubusercontent.com/Daniel001-odii/aiCoaches/main/images/no_profile_image.png'},
       },
 
     is_deleted: {type: Boolean, default: false},
