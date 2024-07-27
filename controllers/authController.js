@@ -124,8 +124,8 @@ exports.login = async (req, res) => {
 
         // set access and refresh token to cookies...
         res.setHeader('Set-Cookie', [
-            `accessToken=${accessToken}; HttpOnly; Secure; SameSite=Lax; Max-Age=${15 * 60}`,
-            `refreshToken=${refreshToken}; HttpOnly; Secure; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`
+            `accessToken=${accessToken}; HttpOnly; Secure; SameSite=none; Max-Age=${15 * 60}`,
+            `refreshToken=${refreshToken}; HttpOnly; Secure; SameSite=none; Max-Age=${7 * 24 * 60 * 60}`
         ]);
 
         // changed sameStite from none to Lax...
@@ -159,7 +159,7 @@ exports.token = async (req, res) => {
             res.cookie('accessToken', accessToken, { 
                 httpOnly: true, 
                 secure: true, 
-                sameSite: 'Lax',
+                sameSite: 'none',
                 maxAge: 15 * 60 * 1000 
             });
             res.status(200).json({ message: 'your session has been restored', accessToken });
