@@ -2,6 +2,7 @@ const multer = require('multer');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
+const watermark = require('image-watermark');
 
 const productImageUpload = multer({
   limits: { fileSize: 800000 },
