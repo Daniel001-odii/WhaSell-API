@@ -58,7 +58,7 @@ exports.getAllProducts = async (req, res) => {
     try{
         const products = await Product.find().populate("shop");
 
-        res.status(200).json({ products});
+        res.status(200).json({ products });
 
     }catch(error){
         res.status(500).json({ message: 'internal server error'});
@@ -136,6 +136,9 @@ exports.createProduct = async (req, res) => {
   
         // Prepare image URLs
         const images = req.files.map(file => (__dirname, file.path));
+        if(!images){
+            return res.status(400).json({ message: "please add atleast one product image"})
+        }
   
         // Create a new product
         const newProduct = new Product({

@@ -121,10 +121,14 @@ exports.login = async (req, res) => {
         user.refreshToken = refreshToken;
         await user.save();
 
+
+        // set access and refresh token to cookies...
         res.setHeader('Set-Cookie', [
-            `accessToken=${accessToken}; HttpOnly; Secure; SameSite=None; Max-Age=${15 * 60}`,
-            `refreshToken=${refreshToken}; HttpOnly; Secure; SameSite=None; Max-Age=${7 * 24 * 60 * 60}`
+            `accessToken=${accessToken}; HttpOnly; Secure; SameSite=Lax; Max-Age=${15 * 60}`,
+            `refreshToken=${refreshToken}; HttpOnly; Secure; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}`
         ]);
+
+        // changed sameStite from none to Lax...
 
         // Respond with success message
         res.json({ message: "Login successful!" });
@@ -150,7 +154,14 @@ exports.token = async (req, res) => {
                 return res.status(403).json({ message: 'Invalid refresh token' });
             }
             const accessToken = generateAccessToken(user);
-            res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, maxAge: 15 * 60 * 1000 });
+
+            // set access..
+            res.cookie('accessToken', accessToken, { 
+                httpOnly: true, 
+                secure: true, 
+                sameSite: 'Lax',
+                maxAge: 15 * 60 * 1000 
+            });
             res.status(200).json({ message: 'your session has been restored', accessToken });
         });
     } catch (error) {

@@ -9,6 +9,9 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 
 
+// use cookie-parser
+app.use(cookieParser());
+
 // Configure CORS
 const corsOptions = {
   origin: ['http://localhost:8080', 'https://wha-sell.vercel.app', 'https://whasell.onrender.com'],// Specify your frontend URL
@@ -19,7 +22,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 // Middleware
 app.use(bodyParser.json());
-app.use(cookieParser());
+
 
 // CONFIGURE HANDLEBARS FOR DYNAMIC EMAIL TEMPLATING..
 const exphbs = require('express-handlebars');

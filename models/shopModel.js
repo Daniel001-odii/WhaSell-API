@@ -4,6 +4,7 @@ const shopSchema = new Schema({
     name: {
         type: String,
         required: true,
+        unique: [true, "shop name is already taken"],
         set: value => value.toLowerCase().split(" ").join("") // Ensure the name is stored in lowercase
     },
     description: {

@@ -162,6 +162,14 @@ exports.editShop = async (req, res) => {
             profile
         } = req.body;
 
+         // check if store name already exists..
+         const exisitngShop = await Shop.findOne({ name });
+
+         // check is shop with name already exists
+         if(exisitngShop){
+             return res.status(400).json({ success: false, message: `sorry shop name already exists`})
+         }
+
         if (!shop) {
             return res.status(404).json({ success: false, message: "Shop not found" });
         }

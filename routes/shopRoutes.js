@@ -24,7 +24,7 @@ router.post("/shops/:shop_id/follow", protect, shopController.followStore);
 router.post("/shops/:shop_id/view", shopController.addViewToStore);
 
 // get all shops...
-router.get("/shops/all", shopController.getAllShops);
+router.get("/shops/list/all", shopController.getAllShops);
 
 //change shop image...
 router.patch("/shops/:shop_id/image", protect, shopController.changeShopImage) 
