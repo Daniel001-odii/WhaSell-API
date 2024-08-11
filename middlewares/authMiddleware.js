@@ -16,8 +16,11 @@ const protectOld = (req, res, next) => {
 };
 
 
+const USER_FROM_DB = require("../models/userModel");
+
+
 // auth middleware for tokens in cookies...
-const protect = (req, res, next) => {
+const protect = async (req, res, next) => {
     const token = req.cookies.accessToken;
     const refreshToken = req.cookies.refreshToken;
     if(!refreshToken){
@@ -29,6 +32,7 @@ const protect = (req, res, next) => {
     try {
         const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
         req.user = decoded.id;
+        req.userModel = await USER_FROM_DB.findById(req.user);
         next();
     } catch (error) {
         res.status(401).json({ message: 'Token is not valid' });

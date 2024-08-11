@@ -1,6 +1,11 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
-const Shop = require('../models/shopModel');
+const user = require('../models/userModel');
+
+
+const { profileImageUpload } = require("../utils/uploadConfig");
+const getFullUrl = require('../utils/getFullPath');
+
 
 
 // get details user by middleware
@@ -11,10 +16,43 @@ exports.getUserDetails = async (req, res) => {
 
         res.status(200).json({ user });
     }catch(error){
+        console.log("error getting user detiails: ", error);
         res.status(500).json({ message: "internal server error" });
     }
 }
 
+
+exports.changeUserProfileImage = async (req, res) => {
+    try {
+
+        // console.log("from client: ", req);
+        // if (!req.file) {
+        //     return res.status(400).json({ message: 'No file uploaded.' });
+        // }
+
+      // Using multer middleware to handle file upload
+      profileImageUpload.single('user_image')(req, res, async function (err) {
+        if (err) {
+          return res.status(400).json({ error: 'Image upload failed', err });
+        }
+  
+        const user = req.userModel;
+
+        console.log("found user: ", user)
+  
+        const imagePath = req.file.path;
+        const imageFullUrl = getFullUrl(req, imagePath);
+  
+        user.profile.image_url = imageFullUrl;
+        await user.save();
+  
+        res.status(201).json({ message: "profile image changed successfully!", imageFullUrl });
+      });
+    } catch (error) {
+      console.log("user image upload error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+};
 
 exports.updateUserProfile = async (req, res) => {
     try {

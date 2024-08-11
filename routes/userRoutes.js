@@ -9,6 +9,8 @@ router.get('/user', protect, userController.getUserDetails);
 
 
 router.patch('/user/update', protect, userController.updateUserProfile);
-// 
+
+router.patch('/user/profile-image', protect, userController.changeUserProfileImage);
+
 
 module.exports = router;
