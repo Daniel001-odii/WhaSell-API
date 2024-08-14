@@ -126,7 +126,7 @@ exports.getShopByShopname = async (req, res) => {
 exports.getShopById = async(req, res) => {
     try{
         const shop_id = req.params.shop_id;
-        const shop = await Shop.findById(shop_id);
+        const shop = await Shop.findById(shop_id).populate("owner profile");
 
         // find all products belonging to shop...
         const products = await Product.find({ shop: shop_id });
@@ -309,6 +309,8 @@ exports.getAllShops = async (req, res) => {
     }
 };
 
+// BOOST STORE...
+
 
 // GET ALL TOP SELLING SHOPS...
 /*
@@ -330,7 +332,12 @@ probably with a threshold....
 shops with followers > 10
 */
 
-// BOOST STORE...
+// GET BOOSTED SHOPS....
+/*
+
+*/
+
+
 
 
 

@@ -3,7 +3,7 @@ const User = require('../models/userModel');
 const Shop = require('../models/shopModel');
 
 const generateAccessToken = (user) => {
-    return jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' });
+    return jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
 };
 
 
@@ -124,8 +124,8 @@ exports.login = async (req, res) => {
 
         // set access and refresh token to cookies...
         res.setHeader('Set-Cookie', [
-            `accessToken=${accessToken}; HttpOnly; Secure; SameSite=none; Max-Age=${15 * 60}`,
-            `refreshToken=${refreshToken}; HttpOnly; Secure; SameSite=none; Max-Age=${7 * 24 * 60 * 60}`
+            `accessToken=${accessToken}; HttpOnly; Secure; SameSite=none; Max-Age=${7 * 24 * 60 * 60}`,
+            `refreshToken=${refreshToken}; HttpOnly; Secure; SameSite=none; Max-Age=${30 * 24 * 60 * 60 * 1000}`
         ]);
 
         // changed sameStite from none to Lax...

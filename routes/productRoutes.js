@@ -17,4 +17,12 @@ router.post('/image', productController.uploadProductImages);
 // get shop products by shop id...
 router.get('/:shop_id/shop', productController.getProductsByShopId);
 
+
+// delete product by its ID...
+router.delete('/:product_id/delete', protect, productController.deleteProductById);
+
+// add product to likes...
+router.post('/:product_id/like', protect, productController.addProductToLikes);
+
+
 module.exports = router;

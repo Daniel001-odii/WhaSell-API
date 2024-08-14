@@ -12,5 +12,6 @@ router.patch('/user/update', protect, userController.updateUserProfile);
 
 router.patch('/user/profile-image', protect, userController.changeUserProfileImage);
 
+router.get('/user/likes', protect, userController.getUserLikedProducts);
 
 module.exports = router;

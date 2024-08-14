@@ -50,7 +50,7 @@ const userSchema = new Schema({
       type:mongoose.Schema.Types.ObjectId, ref: 'Shop'
     },
 
-    likes: [{
+    liked_products: [{
       type:mongoose.Schema.Types.ObjectId, ref: 'Product'
     }],
 

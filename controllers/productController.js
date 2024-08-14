@@ -23,6 +23,8 @@ const jimp = require('jimp');
 const watermark = require('jimp-watermark');
 
 const getFullUrl = require('../utils/getFullPath');
+const productModel = require('../models/productModel');
+const userModel = require('../models/userModel');
 
 // Create a multer instance with the storage configuration
 // const upload = multer({ storage: storage });
@@ -72,20 +74,44 @@ exports.getAllProducts = async (req, res) => {
 
 // get product by its ID....
 exports.getProductById = async (req, res) => {
-    try{
-        const product_id = req.params.product_id;
-        const product = await Product.findById(product_id);
+  try {
+      const product_id = req.params.product_id;
 
-        // increment product views..
-        product.views += 1;
-        await product.save();
+      // Get the 'viewed_products' cookie (if it exists)
+      let viewedProducts = req.cookies.viewed_products;
 
-        res.status(200).json({ product });
-    }catch(error){
-        console.log("error getting product: ", error);
-        res.status(500).json({ message: 'internal server error'});
-    }
-}
+      if (!viewedProducts) {
+          // Initialize the cookie if it doesn't exist
+          viewedProducts = [];
+      } else {
+          // Parse the cookie if it exists
+          viewedProducts = JSON.parse(viewedProducts);
+      }
+
+      const product = await Product.findById(product_id);
+
+      // Increment product views only if the product is not in the viewedProducts array
+      if (!viewedProducts.includes(product_id)) {
+          product.views += 1;
+          await product.save();
+
+          // Add the product_id to the viewedProducts array
+          viewedProducts.push(product_id);
+
+          // Update the 'viewed_products' cookie with the new array
+          res.cookie('viewed_products', JSON.stringify(viewedProducts), {
+              maxAge: 30 * 24 * 60 * 60 * 1000, // Cookie expires in 30 days
+              httpOnly: true // Makes the cookie inaccessible to JavaScript in the browser (optional, for security)
+          });
+      }
+
+      res.status(200).json({ product });
+  } catch (error) {
+      console.log("error getting product: ", error);
+      res.status(500).json({ message: 'internal server error' });
+  }
+};
+
 
 // controller to upload product
 exports.newProduct = async (req, res) => {
@@ -121,12 +147,11 @@ exports.newProduct = async (req, res) => {
 }
 
 
-
 // Function to add watermark
 const addWatermark = async (filePath, full_text) => {
     try {
       const image = await jimp.read(filePath);
-      const font = await jimp.loadFont(jimp.FONT_SANS_16_WHITE); // Load a white font
+      const font = await jimp.loadFont(jimp.FONT_SANS_32_WHITE); // Load a white font
   
       // Create a separate text image with the watermark
       const textImage = new jimp(image.bitmap.width, image.bitmap.height);
@@ -208,7 +233,9 @@ exports.createProduct = async (req, res) => {
       console.log("Error uploading product: ", error);
       res.status(500).json({ message: "Internal server error" });
     }
-  };
+};
+
+
 // get products by shop id..
 exports.getProductsByShopId = async (req, res) => {
     try{
@@ -226,5 +253,59 @@ exports.getProductsByShopId = async (req, res) => {
         console.log("error getting products by shop id: ", error);
     }
 }
+
+// delete product...
+exports.deleteProductById = async (req, res) => {
+  try{
+    const product_id = req.params.product_id;
+    const product = await productModel.findById(product_id);
+
+    if(!product){
+      return res.status(404).json({ message: "cannot find requested product"});
+    }
+
+    await product.deleteOne({ _id:product_id });
+    res.status(201).json({ message: "product deleted successfully"});
+
+  }catch(error){
+    console.log("error deleting product: ", error);
+    res.status(500).json({ message: "internal server error"});
+  }
+};
+
+exports.addProductToLikes = async (req, res) => {
+  try {
+    const product_id = req.params.product_id;
+    const product = await productModel.findById(product_id);
+
+    if (!product) {
+      return res.status(400).json({ message: "Product not found" });
+    }
+
+    const user = await userModel.findById(req.user);
+
+    // Check if the product is already in the user's liked products
+    const isLiked = user.liked_products.includes(product_id);
+
+    if (isLiked) {
+      // If already liked, remove the product from liked_products
+      user.liked_products = user.liked_products.filter(id => id.toString() !== product_id.toString());
+      await user.save();
+      return res.status(200).json({ message: "Product removed from liked products" });
+    } else {
+      // If not liked, add the product to liked_products
+      user.liked_products.push(product_id);
+      await user.save();
+      return res.status(201).json({ message: "Product added to liked products" });
+    }
+
+  } catch (error) {
+    console.log("Error adding product to likes:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+
 
 // Get similar items.. if not get every other items...

@@ -5,6 +5,7 @@ const user = require('../models/userModel');
 
 const { profileImageUpload } = require("../utils/uploadConfig");
 const getFullUrl = require('../utils/getFullPath');
+const userModel = require('../models/userModel');
 
 
 
@@ -85,3 +86,19 @@ exports.updateUserProfile = async (req, res) => {
         res.status(500).json({ message: "internal server error" });
     }
 };
+
+
+
+exports.getUserLikedProducts = async (req, res) => {
+    try{
+        // const liked_products = req.userModel.liked_products;
+        const user = await userModel.findById(req.user).populate("liked_products");
+
+        const liked_products = user.liked_products;
+
+        res.status(200).json({ liked_products });
+    }catch(error){
+        console.log("error getting user liked products: ", error)
+        res.status(500).json({ message: "internal server error" });
+    }
+}

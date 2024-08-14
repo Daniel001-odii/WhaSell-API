@@ -56,7 +56,7 @@ const shopSchema = new Schema({
    
     badge: {
         type: String,
-        default: "none"
+        enum: ["top-seller", "on-discout", "boosted", "trending", "out-of-stock"]
     },
     availability: {
         days: String,
