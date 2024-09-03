@@ -168,7 +168,7 @@ exports.editShop = async (req, res) => {
          const exisitngShop = await Shop.findOne({ name });
 
          // check is shop with name already exists
-         if(exisitngShop){
+         if(exisitngShop && exisitngShop.owner != req.user){
              return res.status(400).json({ success: false, message: `sorry shop name already exists`})
          }
 
@@ -177,7 +177,7 @@ exports.editShop = async (req, res) => {
         }
 
         // Update shop details
-        if (name) shop.name = name;
+        // if (name) shop.name = name;
         if (description) shop.description = description;
         if (category) shop.category = category;
         if(profile){

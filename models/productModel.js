@@ -5,6 +5,11 @@ const productSchema = new Schema({
         type:  String,
         required: [true, "product name is required"],
     },
+    slug: {
+        type: String,
+        // required: [true, "product slug is required"],
+        // set: value => value.split(" ").join("-")
+    },
     description: {
         type: String,
         required: [true, "product description is required"],
@@ -79,5 +84,18 @@ const productSchema = new Schema({
     },
 }, {timestamps: true});
 
+
+productSchema.pre('save', async function (next) {
+    if (!this.isModified('name')) {
+        return next();
+    }
+    // Convert name to lowercase, replace spaces with hyphens, and trim any extra whitespace
+    const slug = this.name.toLowerCase().trim().split(" ").join("-");
+    this.slug = slug;
+
+    console.log(`Generated slug: ${this.slug}`); // Debugging output
+    
+    next();
+});
 
 module.exports = mongoose.model('Product', productSchema);

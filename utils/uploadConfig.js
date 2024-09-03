@@ -3,6 +3,7 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
 
+
 const productImageUpload = multer({
   limits: { fileSize: 800000 },
   storage: multer.diskStorage({

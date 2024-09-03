@@ -10,9 +10,12 @@ router.get('', productController.getAllProducts);
 
 router.get('/:product_id', productController.getProductById);
 
-router.post('/new', protect, productController.createProduct);
+router.post('/new', protect, productController.newProduct);
 
+// IMAGE HANDLERS...
 router.post('/image', productController.uploadProductImages);
+router.delete('/image/delete', productController.deleteUpload);
+
 
 // get shop products by shop id...
 router.get('/:shop_id/shop', productController.getProductsByShopId);

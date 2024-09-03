@@ -7,7 +7,12 @@ const Notification = require('../models/notificationModel');
 const multer = require('multer');
 
 const upload = require('../utils/uploadConfig');
+
+
+// new import...
 const { productImageUpload } = require('../utils/uploadConfig');
+const { initializeFormidable } = require('../config/formidable.config');
+
 
 // Set up multer storage configuration
 const storage = multer.diskStorage({
@@ -26,39 +31,65 @@ const getFullUrl = require('../utils/getFullPath');
 const productModel = require('../models/productModel');
 const userModel = require('../models/userModel');
 
+const { uploadProductImages } = require("../utils/firebaseFileUpload");
+const { deleteFile } = require('../utils/firebaseFileUpload');
+
+
 // Create a multer instance with the storage configuration
 // const upload = multer({ storage: storage });
 
 // Controller function to handle product image uploads
-exports.uploadProductImages = (req, res) => {
-    upload.array('images', 10)(req, res, async (err) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        
-        const imagePaths = req.files.map(file => file.path);
+exports.uploadProductImages = async (req, res) => {
+   const form = initializeFormidable();
 
-        try {
-            // const product = new Product({
-            //     ...req.body,
-            //     images: imagePaths
-            // });
+   form.parse(req, async (err, fields, files) => {
+    if(err){
+      return res.status(500).json({ message: "error uploading images", err});
+    };
 
-            // await product.save();
-            res.status(201).json({ message: 'Product created successfully', imagePaths });
-        } catch (error) {
-            res.status(400).json({ error: error.message });
-        }
-    });
+    // if(!req.files){
+    //   return res.status(400).json({ message: "please attach an image file"});
+    // }
+
+    const file = files['images'][0];
+
+    const result = await uploadProductImages(file);
+
+    if(result.success) {
+      res.status(200).json({result});
+    } else {
+      res.status(500).json(result);
+    }
+
+   })
 };
 
+exports.deleteUpload = async (req, res) => {
+  const { filePath }= req.body // Assume the file path is sent in the request body
 
+  console.log("client: ", req.body)
+
+  if (!filePath) {
+    return res.status(400).json({ success: false, error: 'File path is required.' });
+  }
+
+  const decodedFilePath = decodeURIComponent(filePath);
+
+  console.log("attempting to delete: ", decodedFilePath)
+
+  const result = await deleteFile(decodedFilePath);
+
+  if (result.success) {
+    return res.status(200).json(result);
+  } else {
+    return res.status(500).json(result);
+  }
+};
 
 // Create
 // Read
 // Update
 // Delete
-
 
 // controller to get all products from...
 exports.getAllProducts = async (req, res) => {
@@ -119,13 +150,13 @@ exports.newProduct = async (req, res) => {
         const user_id = req.user;
         const user = await User.findById(user_id).populate();
 
-        const { name, description, category, image, condition, price, charge_for_delivery, price_negotiable, delivery_fee } = req.body;
-        
+        const { name, description, category, images, condition, price, charge_for_delivery, price_negotiable, delivery_fee } = req.body;
+        console.log('client: ', req.body)
         const new_product = new Product({
             name,
             description,
             category,
-            image,
+            images,
             condition,
             price,
             charge_for_delivery,

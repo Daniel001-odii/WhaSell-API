@@ -74,10 +74,6 @@ app.get('/', function(req, res){
 })
 
 
-
-
-
-
 // SET VIEW ENGINE FOR EMAIL TEMPLATES....
 app.engine('handlebars', exphbs.engine());
 app.set('view engine', 'handlebars');
@@ -88,5 +84,6 @@ app.set('views', path.join(__dirname, 'templates', 'emails'));
 app.listen(process.env.PORT || 8000, () => {
   console.log(`Server is live on port ${process.env.PORT}`);
 })
+
 
 
