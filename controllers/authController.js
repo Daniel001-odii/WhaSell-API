@@ -36,8 +36,12 @@ exports.register = async (req, res) => {
         await user.save();
 
         // save tokens to cookies
-        res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, maxAge: 15 * 60 * 1000 });
+      /*   res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, maxAge: 15 * 60 * 1000 });
         res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+ */
+        res.cookie('accessToken', accessToken, { httpOnly: false, maxAge: 15 * 60 * 1000 });
+        res.cookie('refreshToken', refreshToken, { httpOnly: false, maxAge: 7 * 24 * 60 * 60 * 1000 });
+
 
         res.status(201).json({ message: 'User registered and logged-in successfully' });
 
@@ -86,8 +90,8 @@ exports.registerSeller = async (req, res) => {
         await user.save();
 
         // save tokens to cookies
-        res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, maxAge: 15 * 60 * 1000 });
-        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.cookie('accessToken', accessToken, { httpOnly: false, maxAge: 15 * 60 * 1000 });
+        res.cookie('refreshToken', refreshToken, { httpOnly: false, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
         res.status(201).json({ message: 'User registered and logged-in successfully' });
 
@@ -123,10 +127,13 @@ exports.login = async (req, res) => {
 
 
         // set access and refresh token to cookies...
-        res.setHeader('Set-Cookie', [
+     /*    res.setHeader('Set-Cookie', [
             `accessToken=${accessToken}; HttpOnly; Secure; SameSite=none; Max-Age=${7 * 24 * 60 * 60}`,
             `refreshToken=${refreshToken}; HttpOnly; Secure; SameSite=none; Max-Age=${30 * 24 * 60 * 60 * 1000}`
-        ]);
+        ]); */
+
+        res.cookie('accessToken', accessToken, { httpOnly: false, maxAge: 15 * 60 * 1000 });
+        res.cookie('refreshToken', refreshToken, { httpOnly: false, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
         // changed sameStite from none to Lax...
 
