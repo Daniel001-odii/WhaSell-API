@@ -37,13 +37,13 @@ const uploadProductImages = async (file) => {
 
 
 
-  const uploadUserProfileImage = async (file) => {
+  const uploadShopProfileImage = async (file) => {
     try {
       // Path to the image file on the local machine
       const filePath = file.filepath;
   
       // Set a preferred path on Firebase Storage
-      const remoteFilePath = `product-images/${file.originalFilename}`;
+      const remoteFilePath = `shop-images/${file.originalFilename}`;
   
       // Upload the image using the bucket.upload() function
       await bucket.upload(filePath, { destination: remoteFilePath });
@@ -63,6 +63,7 @@ const uploadProductImages = async (file) => {
       return { success: false, error: uploadError.message };
     }
   };
+  
 
 
   const deleteFile = async (filePath) => {
@@ -80,4 +81,4 @@ const uploadProductImages = async (file) => {
   };
   
   
-  module.exports = { uploadProductImages, uploadUserProfileImage, deleteFile };
+  module.exports = { uploadProductImages, uploadShopProfileImage, deleteFile };

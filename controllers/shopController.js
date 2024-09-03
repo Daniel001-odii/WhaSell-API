@@ -11,24 +11,15 @@ const Notification = require("../models/notificationModel")
 
 const { shopImageUpload } = require("../utils/uploadConfig");
 
+const { initializeFormidable } = require('../config/formidable.config');
+const { uploadShopProfileImage } = require('../utils/firebaseFileUpload');
+
+
 const getFullUrl = require('../utils/getFullPath');
 
 // Controller to change shop profile image
-exports.changeShopImage = async (req, res) => {
+/* exports.changeShopImage = async (req, res) => {
     try {
-      // Using multer middleware to handle file upload
-      shopImageUpload.single('shop_image')(req, res, async function (err) {
-        if (err) {
-          return res.status(400).json({ error: 'Image upload failed', err });
-        }
-  
-        const shop_id = req.params.shop_id;
-        const shop = await Shop.findById(shop_id);
-  
-        if (!shop) {
-          return res.status(404).json({ error: 'Shop not found' });
-        }
-  
         const imagePath = req.file.path;
         const imageFullUrl = getFullUrl(req, imagePath);
   
@@ -36,13 +27,37 @@ exports.changeShopImage = async (req, res) => {
         await shop.save();
   
         res.status(201).json({ message: "Shop image changed successfully!", imageFullUrl });
-      });
     } catch (error) {
       console.log("Shop image upload error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
-  };
+};
+ */
+exports.changeShopImage = async (req, res) => {
+    const form = initializeFormidable();
+    const shop_id = req.params.shop_id;
+    const shop = await Shop.findById(shop_id);
 
+    form.parse(req, async (err, fields, files) => {
+     if(err){
+       return res.status(500).json({ message: "error uploading images", err});
+     };
+ 
+     const file = files['shop_image'][0];
+     const result = await uploadShopProfileImage(file);
+ 
+     if(result.success) {
+        shop.profile.image_url = result.url;
+        await shop.save();
+
+    //    res.status(200).json({result});
+       res.status(200).json({ message: "shop photo changed successfully!"});
+     } else {
+       res.status(500).json(result);
+     }
+ 
+    })
+ };
 
 // CREATE A NEW SHOP...
 exports.createNewShop = async (req, res) => {
