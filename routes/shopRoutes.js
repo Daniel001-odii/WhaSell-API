@@ -27,7 +27,7 @@ router.post("/shops/:shop_id/view", shopController.addViewToStore);
 router.get("/shops/list/all", shopController.getAllShops);
 
 //change shop image...
-router.patch("/shops/:shop_id/image", protect, shopController.changeShopImage) 
+router.post("/shops/:shop_id/image", protect, shopController.changeShopImage) 
 
 module.exports = router;
 
