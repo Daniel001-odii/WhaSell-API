@@ -16,13 +16,13 @@ const generateRefreshToken = (user) => {
 // res.cookie('refreshToken', refreshToken, { httpOnly: false, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
 const setAuthCookies = (res, access_token, refresh_token) => {
- /*    response.setHeader('Set-Cookie', [
+    res.setHeader('Set-Cookie', [
         `accessToken=${access_token}; HttpOnly; Secure; SameSite=none; Max-Age=${7 * 24 * 60 * 60}`,
         `refreshToken=${refresh_token}; HttpOnly; Secure; SameSite=none; Max-Age=${30 * 24 * 60 * 60 * 1000}`
-    ]); */
+    ]);
 
-    res.cookie('accessToken', access_token, { httpOnly: true, maxAge: 15 * 60 * 1000 });
-    res.cookie('refreshToken', refresh_token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+    // res.cookie('accessToken', access_token, { httpOnly: true, maxAge: 15 * 60 * 1000 });
+    // res.cookie('refreshToken', refresh_token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
 }
 
@@ -196,8 +196,11 @@ exports.logout = async (req, res) => {
             user.refreshToken = null;
             await user.save();
         }
-        res.clearCookie('accessToken');
-        res.clearCookie('refreshToken');
+        res.setHeader('Set-Cookie', [
+            `accessToken=; HttpOnly; Secure; SameSite=none; Max-Age=0`,
+            `refreshToken=; HttpOnly; Secure; SameSite=none; Max-Age=0`
+        ]);
+
         res.json({ message: 'Logged out successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Error logging out', error });
