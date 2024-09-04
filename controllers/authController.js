@@ -12,6 +12,20 @@ const generateRefreshToken = (user) => {
 };
 
 
+// res.cookie('accessToken', accessToken, { httpOnly: false, maxAge: 15 * 60 * 1000 });
+// res.cookie('refreshToken', refreshToken, { httpOnly: false, maxAge: 7 * 24 * 60 * 60 * 1000 });
+
+const setAuthCookies = (res, access_token, refresh_token) => {
+ /*    response.setHeader('Set-Cookie', [
+        `accessToken=${access_token}; HttpOnly; Secure; SameSite=none; Max-Age=${7 * 24 * 60 * 60}`,
+        `refreshToken=${refresh_token}; HttpOnly; Secure; SameSite=none; Max-Age=${30 * 24 * 60 * 60 * 1000}`
+    ]); */
+
+    res.cookie('accessToken', access_token, { httpOnly: true, maxAge: 15 * 60 * 1000 });
+    res.cookie('refreshToken', refresh_token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+
+}
+
 exports.register = async (req, res) => {
     const { username, password, email, phone } = req.body;
     try {
@@ -36,11 +50,7 @@ exports.register = async (req, res) => {
         await user.save();
 
         // save tokens to cookies
-      /*   res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, maxAge: 15 * 60 * 1000 });
-        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
- */
-        res.cookie('accessToken', accessToken, { httpOnly: false, maxAge: 15 * 60 * 1000 });
-        res.cookie('refreshToken', refreshToken, { httpOnly: false, maxAge: 7 * 24 * 60 * 60 * 1000 });
+        setAuthCookies(res, accessToken, refreshToken);
 
 
         res.status(201).json({ message: 'User registered and logged-in successfully' });
@@ -86,12 +96,12 @@ exports.registerSeller = async (req, res) => {
 
         const accessToken = generateAccessToken(user);
         const refreshToken = generateRefreshToken(user);
+
         user.refreshToken = refreshToken;
         await user.save();
 
         // save tokens to cookies
-        res.cookie('accessToken', accessToken, { httpOnly: false, maxAge: 15 * 60 * 1000 });
-        res.cookie('refreshToken', refreshToken, { httpOnly: false, maxAge: 7 * 24 * 60 * 60 * 1000 });
+        setAuthCookies(res, accessToken, refreshToken);
 
         res.status(201).json({ message: 'User registered and logged-in successfully' });
 
@@ -127,20 +137,13 @@ exports.login = async (req, res) => {
 
 
         // set access and refresh token to cookies...
-     /*    res.setHeader('Set-Cookie', [
-            `accessToken=${accessToken}; HttpOnly; Secure; SameSite=none; Max-Age=${7 * 24 * 60 * 60}`,
-            `refreshToken=${refreshToken}; HttpOnly; Secure; SameSite=none; Max-Age=${30 * 24 * 60 * 60 * 1000}`
-        ]); */
-
-        res.cookie('accessToken', accessToken, { httpOnly: false, maxAge: 15 * 60 * 1000 });
-        res.cookie('refreshToken', refreshToken, { httpOnly: false, maxAge: 7 * 24 * 60 * 60 * 1000 });
-
-        // changed sameStite from none to Lax...
+        setAuthCookies(res, accessToken, refreshToken);
 
         // Respond with success message
         res.json({ message: "Login successful!" });
     } catch (error) {
         res.status(500).json({ message: 'Error logging in', error });
+        console.log("error in login: ", error)
     }
 };
 

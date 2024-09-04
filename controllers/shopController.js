@@ -114,7 +114,7 @@ exports.getShopByShopname = async (req, res) => {
         const name = req.params.shop_name.toLowerCase();
 
         // Find the shop by name (ensure name is stored in lowercase in the database)
-        const shop = await Shop.findOne({ name: name });
+        const shop = await Shop.findOne({ name: name }).populate("owner");
         if (!shop) {
             return res.status(404).json({ success: false, message: "Shop not found, please check spelling." });
         }

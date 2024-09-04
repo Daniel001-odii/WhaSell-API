@@ -24,11 +24,11 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 // just for cookies...
-app.use(function(req, res, next) {  
-  res.header('Access-Control-Allow-Origin', req.headers.origin);
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});  
+// app.use(function(req, res, next) {  
+//   res.header('Access-Control-Allow-Origin', req.headers.origin);
+//   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+//   next();
+// });  
 
 
 // CONFIGURE HANDLEBARS FOR DYNAMIC EMAIL TEMPLATING..

@@ -65,6 +65,33 @@ const uploadProductImages = async (file) => {
   };
   
 
+  const uploadGlip = async (file) => {
+    try {
+      // Path to the image file on the local machine
+      const filePath = file.filepath;
+  
+      // Set a preferred path on Firebase Storage
+      const remoteFilePath = `shop-images/${file.originalFilename}`;
+  
+      // Upload the image using the bucket.upload() function
+      await bucket.upload(filePath, { destination: remoteFilePath });
+  
+      // Options for the getSignedUrl() function
+      const options = {
+        action: 'read',
+        expires: '01-01-2100'
+      };
+  
+      // Get the signed URL for the uploaded file
+      const signedUrl = await bucket.file(remoteFilePath).getSignedUrl(options);
+      const imageUrl = signedUrl[0];
+  
+      return { success: true, url: imageUrl };
+    } catch (uploadError) {
+      return { success: false, error: uploadError.message };
+    }
+  };
+
 
   const deleteFile = async (filePath) => {
     try {
