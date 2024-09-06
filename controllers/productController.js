@@ -3,7 +3,7 @@ const User = require('../models/userModel');
 const Shop = require('../models/shopModel');
 const Product = require('../models/productModel');
 const Notification = require('../models/notificationModel');
-
+const Glip = require("../models/glipModel")
 const multer = require('multer');
 
 const upload = require('../utils/uploadConfig');
@@ -31,7 +31,7 @@ const getFullUrl = require('../utils/getFullPath');
 const productModel = require('../models/productModel');
 const userModel = require('../models/userModel');
 
-const { uploadProductImages } = require("../utils/firebaseFileUpload");
+const { uploadProductImages, uploadGlipVideo } = require("../utils/firebaseFileUpload");
 const { deleteFile } = require('../utils/firebaseFileUpload');
 
 
@@ -62,6 +62,25 @@ exports.uploadProductImages = async (req, res) => {
     }
 
    })
+};
+
+exports.uploadGlipVideo = async (req, res) => {
+  const form = initializeFormidable();
+
+  form.parse(req, async (err, fields, files) => {
+   if(err){
+     return res.status(500).json({ message: "error uploading glip video", err});
+   };
+   const file = files['video'][0];
+   const result = await uploadGlipVideo(file);
+
+   if(result.success) {
+     res.status(200).json({result});
+   } else {
+     res.status(500).json(result);
+   }
+
+  })
 };
 
 exports.deleteUpload = async (req, res) => {
@@ -145,18 +164,18 @@ exports.getProductById = async (req, res) => {
 
 
 // controller to upload product
-exports.newProduct = async (req, res) => {
+exports.newGlipVideo = async (req, res) => {
     try{
         const user_id = req.user;
         const user = await User.findById(user_id).populate();
 
-        const { name, description, category, images, condition, price, charge_for_delivery, price_negotiable, delivery_fee } = req.body;
+        const { name, description, category, video_url, condition, price, charge_for_delivery, price_negotiable, delivery_fee } = req.body;
         console.log('client: ', req.body)
-        const new_product = new Product({
+        const new_glip = new Glip({
             name,
             description,
             category,
-            images,
+            video_url,
             condition,
             price,
             charge_for_delivery,
@@ -165,16 +184,48 @@ exports.newProduct = async (req, res) => {
             shop: user.shop,
         });
 
-        await new_product.save();
+        await new_glip.save();
 
-        res.status(200).json({ message: "New product uploaded successfully!", product: new_product, user });
+        res.status(200).json({ message: "New glip uploaded successfully!", glip: new_glip, user });
 
         // send a notification when new product is uploaded...
 
     }catch(error){
-        res.status(500).json({ message: 'Error uploading product', error});
-        console.log(`error uploading product: ${error}`);
+        res.status(500).json({ message: 'Error uploading glip', error});
+        console.log(`error uploading glip: ${error}`);
     }
+}
+
+exports.newProduct = async (req, res) => {
+  try{
+      const user_id = req.user;
+      const user = await User.findById(user_id).populate();
+
+      const { name, description, category, images, condition, price, charge_for_delivery, price_negotiable, delivery_fee } = req.body;
+      console.log('client: ', req.body)
+      const new_product = new Product({
+          name,
+          description,
+          category,
+          images,
+          condition,
+          price,
+          charge_for_delivery,
+          price_negotiable,
+          delivery_fee,
+          shop: user.shop,
+      });
+
+      await new_product.save();
+
+      res.status(200).json({ message: "New product uploaded successfully!", product: new_product, user });
+
+      // send a notification when new product is uploaded...
+
+  }catch(error){
+      res.status(500).json({ message: 'Error uploading product', error});
+      console.log(`error uploading product: ${error}`);
+  }
 }
 
 
@@ -211,61 +262,6 @@ const addWatermark = async (filePath, full_text) => {
     }
 };
 
-exports.createProduct = async (req, res) => {
-    try {
-      const user_id = req.user;
-      const user = await User.findById(user_id).populate("shop");
-  
-      // Handle image upload
-      productImageUpload.array('product_images', 5)(req, res, async function (err) {
-        if (err) {
-          return res.status(400).json({ message: 'Image upload failed', err });
-        }
-  
-        if (!req.files || req.files.length == 0) {
-          return res.status(400).send({ message: 'Please add at least one product image' });
-        }
-  
-        const { name, description, price, category, condition, charge_for_delivery, delivery_fee, price_negotiable } = req.body;
-  
-        // Apply watermark to each uploaded image
-        try {
-          const watermarkPromises = req.files.map(file => addWatermark(file.path, user.shop.name));
-          await Promise.all(watermarkPromises);
-        } catch (error) {
-          console.log("Error applying watermark: ", error);
-          return res.status(500).send({ error: 'Failed to apply watermark.' });
-        }
-  
-        // Prepare image URLs
-        // const images = req.files.map(file => (__dirname, file.path));
-        const images = req.files.map(file => getFullUrl(req, file.path));
-  
-        // Create a new product
-        const newProduct = new Product({
-          name,
-          description,
-          images,
-          price,
-          category,
-          condition,
-          charge_for_delivery,
-          delivery_fee,
-          price_negotiable,
-          shop: user.shop._id,
-        });
-  
-        // Save the product to the database
-        const savedProduct = await newProduct.save();
-  
-        res.status(201).json({ message: 'Product created successfully', product: savedProduct });
-      });
-    } catch (error) {
-      console.log("Error uploading product: ", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-};
-
 
 // get products by shop id..
 exports.getProductsByShopId = async (req, res) => {
@@ -283,6 +279,25 @@ exports.getProductsByShopId = async (req, res) => {
         res.status(500).json({ message: 'internal server error'});
         console.log("error getting products by shop id: ", error);
     }
+}
+
+
+// get products by shop id..
+exports.getGlipsByShopId = async (req, res) => {
+  try{
+      const shop_id = req.params.shop_id;
+      const shop = await Shop.findById(shop_id);
+      if(!shop){
+          res.status(404).json({ message: "shop not found"});
+      }
+
+      const glips = await Glip.find({ shop: shop_id })
+      res.status(200).json({ glips });
+
+  }catch(error){
+      res.status(500).json({ message: 'internal server error'});
+      console.log("error getting glips by shop id: ", error);
+  }
 }
 
 // delete product...

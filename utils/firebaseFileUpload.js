@@ -65,13 +65,13 @@ const uploadProductImages = async (file) => {
   };
   
 
-  const uploadGlip = async (file) => {
+  const uploadGlipVideo = async (file) => {
     try {
       // Path to the image file on the local machine
       const filePath = file.filepath;
   
       // Set a preferred path on Firebase Storage
-      const remoteFilePath = `shop-images/${file.originalFilename}`;
+      const remoteFilePath = `product-glips/${file.originalFilename}`;
   
       // Upload the image using the bucket.upload() function
       await bucket.upload(filePath, { destination: remoteFilePath });
@@ -84,9 +84,9 @@ const uploadProductImages = async (file) => {
   
       // Get the signed URL for the uploaded file
       const signedUrl = await bucket.file(remoteFilePath).getSignedUrl(options);
-      const imageUrl = signedUrl[0];
+      const videoUrl = signedUrl[0];
   
-      return { success: true, url: imageUrl };
+      return { success: true, url: videoUrl };
     } catch (uploadError) {
       return { success: false, error: uploadError.message };
     }
@@ -108,4 +108,4 @@ const uploadProductImages = async (file) => {
   };
   
   
-  module.exports = { uploadProductImages, uploadShopProfileImage, deleteFile };
+  module.exports = { uploadProductImages, uploadShopProfileImage, uploadGlipVideo, deleteFile };

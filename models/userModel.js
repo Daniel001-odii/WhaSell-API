@@ -102,6 +102,10 @@ const userSchema = new Schema({
       expiry_date: Date,
     },
 
+    shops_visited_previously: [{
+      type:mongoose.Schema.Types.ObjectId, ref: 'Shop'
+    }],
+
     // settings starts here....
     settings: {
       notifications: {

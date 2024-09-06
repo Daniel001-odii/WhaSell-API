@@ -324,6 +324,7 @@ exports.getAllShops = async (req, res) => {
     }
 };
 
+
 // BOOST STORE...
 
 
@@ -334,7 +335,7 @@ and return...
 */
 
 
-// GET SHOPS BY USERS LOCATION....
+// GET SHOPS NEAR USERS LOCATION....
 /*
 basically accepts a location and return stores
 based on the provided location

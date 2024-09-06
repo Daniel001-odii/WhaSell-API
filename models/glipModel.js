@@ -1,26 +1,26 @@
 var mongoose = require('mongoose'), Schema = mongoose.Schema;
 
-const productSchema = new Schema({
+const glipSchema = new Schema({
     name: {
         type:  String,
-        required: [true, "product name is required"],
+        required: [true, "glip name is required"],
     },
     slug: {
         type: String,
-        // required: [true, "product slug is required"],
+        // required: [true, "glip slug is required"],
         // set: value => value.split(" ").join("-")
     },
     description: {
         type: String,
-        required: [true, "product description is required"],
+        required: [true, "glip description is required"],
     },
-    images: [{
+    video_url: {
         type: String,
-        required:  [true, "atleast one product image is required"],
-    }],
+        required: [true, "glip video url is missing"]
+    },
     price: {
         type: Number,
-        required: [true, "product price is required"],
+        required: [true, "glip price is required"],
     },
     discount: Number,
     category:{
@@ -39,10 +39,10 @@ const productSchema = new Schema({
             "Home & Kitchen",
             "Sports & Outdoors",
             "Grocery & Gourmet Food",
-            "Baby Products",
+            "Baby glips",
             "Travel & Luggage"
         ],
-        required: [true, "product category is required"],
+        required: [true, "glip category is required"],
     },
     is_sold: {
         type: Boolean,
@@ -60,13 +60,13 @@ const productSchema = new Schema({
             "refurbished by manufacturer",
             "fairly used"
         ],
-        required: [true, "product condition is required"],
+        required: [true, "glip condition is required"],
     },
     charge_for_delivery: {
         type: String,
         enum: ['yes', 'no'],
         default: 'no',
-        required: [true, "product price is required"],
+        required: [true, "glip price is required"],
     },
     delivery_fee: Number,
     price_negotiable: {
@@ -89,7 +89,7 @@ const productSchema = new Schema({
 }, {timestamps: true});
 
 
-productSchema.pre('save', async function (next) {
+glipSchema.pre('save', async function (next) {
     if (!this.isModified('name')) {
         return next();
     }
@@ -102,4 +102,4 @@ productSchema.pre('save', async function (next) {
     next();
 });
 
-module.exports = mongoose.model('Product', productSchema);
+module.exports = mongoose.model('glip', glipSchema);
