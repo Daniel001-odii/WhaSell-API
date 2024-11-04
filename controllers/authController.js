@@ -79,6 +79,8 @@ exports.registerSeller = async (req, res) => {
             category: shop_category,
             owner: user._id,
         });
+
+        // shop.profile.location = user.profile.location;
         await shop.save();
 
         // check if phone is already registered...

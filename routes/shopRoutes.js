@@ -21,13 +21,23 @@ router.patch("/shops/:shop_id/edit", protect, shopController.editShop);
 router.post("/shops/:shop_id/follow", protect, shopController.followStore);
 
 // add views to shop...
-router.post("/shops/:shop_id/view", shopController.addViewToStore);
+router.get("/shops/:shop_id/view", shopController.addViewToStore);
 
 // get all shops...
 router.get("/shops/list/all", shopController.getAllShops);
 
 //change shop image...
 router.post("/shops/:shop_id/image", protect, shopController.changeShopImage) 
+
+
+// get shops near user..
+router.get("/shops/near_me/:user_state/all", shopController.getShopsInNearByStates);
+
+// get all boosted shops...
+router.get("/shops/boosted/all", shopController.getBoostedShops);
+
+
+router.get("/shops/data/analytics", protect, shopController.getShopsAnalytics);
 
 module.exports = router;
 

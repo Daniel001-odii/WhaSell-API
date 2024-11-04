@@ -16,9 +16,18 @@ const shopSchema = new Schema({
     },
 
     followers: [{
-        type: mongoose.Schema.Types.ObjectId, ref: 'User'
+        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+        date: {
+            type: Date,
+            default: Date.now(),
+        }
     }], 
-    followers_count: Number,
+    
+  /*   followers_count: {
+        type: Number,
+        default: 0
+    }, */
+
     reviews:{
         rating: {
             type: Number,
@@ -30,6 +39,20 @@ const shopSchema = new Schema({
         type: Number,
         default: 0,
     },
+    sold_products: {
+        type: Number,
+        default: 0
+    },
+    best_selling_product: {
+        type: String,
+        default: ""
+    },
+
+    shop_visitors: {
+        type: Number,
+        default: 0
+    },
+
     owner: {
         type: mongoose.Schema.Types.ObjectId, ref: 'User'
     },
@@ -42,7 +65,6 @@ const shopSchema = new Schema({
             type: String, 
             default: 'https://raw.githubusercontent.com/Daniel001-odii/aiCoaches/main/images/no_shop_image.png'},
         location: {
-            city: String,
             LGA: String,
             state: String,
             address: String,
@@ -54,7 +76,23 @@ const shopSchema = new Schema({
         },
     
    
-    badge: {
+    is_boosted: {
+        type: Boolean,
+        default: false,
+    },
+    is_top_seller: {
+        type: Boolean,
+        default: false,
+    },
+    is_on_discount: {
+        discount_percent: Number,
+    },
+    is_trending: {
+        type: Boolean,
+        default: false,
+    },
+
+    badges: {
         type: String,
         enum: ["top-seller", "on-discout", "boosted", "trending", "out-of-stock"]
     },

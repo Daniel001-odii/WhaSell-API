@@ -16,6 +16,9 @@ const { uploadShopProfileImage } = require('../utils/firebaseFileUpload');
 
 
 const getFullUrl = require('../utils/getFullPath');
+const shopModel = require("../models/shopModel");
+
+const nearbyStates = require('../utils/statesAndNeighbors.js');
 
 // Controller to change shop profile image
 /* exports.changeShopImage = async (req, res) => {
@@ -86,7 +89,8 @@ exports.createNewShop = async (req, res) => {
             description,
             category,
         });
-        await shop.save();
+
+        
 
         // save shop to userDb...
         const user = await User.findById(owner);
@@ -95,6 +99,11 @@ exports.createNewShop = async (req, res) => {
         // change user account type to seller...
         user.account_type = "seller";
         await user.save();
+
+        shop.profile.location = user.location;
+
+        await shop.save();
+
 
         console.log("request body: ", req.body);
 
@@ -227,16 +236,18 @@ exports.followStore = async (req, res) => {
 
         if (!shop) {
             return res.status(404).json({ success: false, message: "Shop not found" });
-        }
+        };
 
         // Check if the user is already following the shop
-        if (shop.followers.includes(user_id)) {
-            const user_index = shop.followers.indexOf(user_id);
-            if(user_index > -1){
-                shop.followers.splice(user_index, 1);
-            }
+        const userIndex = shop.followers.findIndex(follower => follower._id.toString() === user_id.toString());
+        if (userIndex > -1) {
+            shop.followers.splice(userIndex, 1);
             await shop.save();
-            return res.status(201).json({ success: true, message: "You unfollowed this shop" });
+            return res.status(200).json({ success: true, message: "You unfollowed this shop" });
+        } else {
+            shop.followers.push(user_id);
+            await shop.save();
+            return res.status(201).json({ success: false, message: "You are now following this shop" });
         }
 
         // also dont allow shop owners to follow their own store...
@@ -245,15 +256,17 @@ exports.followStore = async (req, res) => {
         }
 
         // Add user to shop's followers
-        shop.followers.push(user_id);
+       /*  shop.followers.push(user_id);
         await shop.save();
-
+ */
         // Optionally, update user's followed shops
         /*
         const user = await User.findById(user_id);
         user.followedShops.push(shop_id);
         await user.save();
         */
+
+        
 
 
         res.status(200).json({ success: true, message: "You are now following the shop", shop });
@@ -270,14 +283,37 @@ exports.addViewToStore = async (req, res) => {
         const shop_id = req.params.shop_id;
         let shop = await Shop.findById(shop_id);
 
+        let shop_views = shop.views;
+
         if (!shop) {
             return res.status(404).json({ success: false, message: "Shop not found" });
+        };
+
+
+        let viewed_shops = req.cookies.viewed_shops;
+
+        if(!viewed_shops){
+            viewed_shops = [];
+        } else {
+            viewed_shops = JSON.parse(viewed_shops);
+        };
+        if(!viewed_shops.includes(shop_id)){
+            // Increment the view count
+           
+            shop.views += 1;
+            await shop.save();
+
+            viewed_shops.push(shop_id);
+
+            // Update the 'viewed_products' cookie with the new array
+            res.cookie('viewed_shops', JSON.stringify(viewed_shops), {
+                maxAge: 30 * 24 * 60 * 60 * 1000, // Cookie expires in 30 days
+                httpOnly: true // Makes the cookie inaccessible to JavaScript in the browser (optional, for security)
+            });
         }
 
-        // Increment the view count
-        const shop_views = shop.views;
-        shop.views += 1;
-        await shop.save();
+
+       
 
         res.status(200).json({ success: true, message: `you viewed ${shop.name}`, shop_views });
     } catch (error) {
@@ -285,6 +321,8 @@ exports.addViewToStore = async (req, res) => {
         console.log("Error adding view to shop: ", error);
     }
 }
+
+
 
 
 // UPDATE STORE AVAILABILITY...
@@ -324,6 +362,178 @@ exports.getAllShops = async (req, res) => {
     }
 };
 
+/* exports.getShopsAnalytics = async (req, res) => {
+    try {
+        const user_id = req.user;
+        const shop = await shopModel.findOne(
+            { owner: user_id }, 
+            "views followers sold_products best_selling_product"
+        );
+
+        if (!shop) {
+            return res.status(404).json({ message: "Couldn't find shop!" });
+        }
+
+        const followers_count = shop.followers.length;
+        let best_selling_product = shop.best_selling_product;
+        if (!best_selling_product) {
+            shop.best_selling_product = "No data available";
+        }
+
+        // Group followers by month and count them
+        const monthNames = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ];
+        const followersByMonth = {};
+
+        shop.followers.forEach(follower => {
+            const month = follower.date.getMonth();  // Get month as an index (0 = January)
+            const monthName = monthNames[month];
+            followersByMonth[monthName] = (followersByMonth[monthName] || 0) + 1;
+        });
+
+        // Prepare chart_data
+        const labels = Object.keys(followersByMonth);
+        const data = Object.values(followersByMonth);
+        const bgColor = labels.map(() => `#${Math.floor(Math.random()*16777215).toString(16)}`);
+
+        const chart_data = {
+            labels: labels,
+            datasets: [{
+                backgroundColor: bgColor,
+                data: data
+            }]
+        };
+
+        res.status(200).json({ shop, followers_count, chart_data });
+
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Internal server error" });
+        console.log("Error getting shops: ", error);
+    }
+}; */
+
+exports.getShopsAnalytics = async (req, res) => {
+    try {
+        const user_id = req.user;
+        const shop = await shopModel.findOne(
+            { owner: user_id }, 
+            "views followers sold_products best_selling_product"
+        );
+
+        if (!shop) {
+            return res.status(404).json({ message: "Couldn't find shop!" });
+        }
+
+        const followers_count = shop.followers.length;
+        let best_selling_product = shop.best_selling_product;
+        if (!best_selling_product) {
+            shop.best_selling_product = "No data available";
+        }
+
+        // Initialize all months with 0 followers
+        const monthNames = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ];
+        const followersByMonth = monthNames.reduce((acc, month) => {
+            acc[month] = 0;
+            return acc;
+        }, {});
+
+        // Count followers for each month
+        shop.followers.forEach(follower => {
+            const month = follower.date.getMonth();  // Get month as an index (0 = January)
+            const monthName = monthNames[month];
+            followersByMonth[monthName] += 1;
+        });
+
+        // Prepare chart_data
+        const labels = monthNames;  // Ensure all months are included
+        const data = labels.map(month => followersByMonth[month]);
+        
+        // const bgColor = labels.map(() => `#${Math.floor(Math.random()*16777215).toString(16)}`);
+        const bgColor = labels.map(() => "#47c68f");
+
+        const chart_data = {
+            labels: labels,
+            datasets: [{
+                backgroundColor: bgColor,
+                data: data
+            }]
+        };
+
+        res.status(200).json({ shop, followers_count, chart_data });
+
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Internal server error" });
+        console.log("Error getting shops: ", error);
+    }
+};
+
+
+exports.getShopsInNearByStates = async (req, res) => {
+    try {
+        const user_state = req.params.user_state.split(" ")[0];
+
+        console.log("from client: ", user_state);
+
+        // Check if the user_state is provided
+        if (!user_state) {
+            return res.status(400).json({ message: "Please provide a valid user state" });
+        }
+
+        // Find the user's state object and its neighbors
+        const state_object = nearbyStates.find(state => state.state.toLowerCase() === user_state.toLowerCase());
+
+        if (!state_object) {
+            return res.status(404).json({ message: "State not found" });
+        }
+
+        // If state_object is found, proceed with fetching shops in neighboring states
+        console.log("States near you: ", state_object.neighbors);
+
+        // Function to fetch shops in neighboring states
+        const getShopsInNearbyStates = async () => {
+            const shops_near_me = [];
+
+            // Normalize user_state to match by first word only (e.g., "Lagos" in "Lagos State")
+            const normalized_user_state = user_state.split(' ')[0].toLowerCase();
+
+            // First, find shops in the user's state using a regex to match by the first word
+            const shops_in_user_state = await shopModel.find({
+                'profile.location.state': { $regex: `^${normalized_user_state}`, $options: 'i' }
+            });
+            shops_near_me.push(...shops_in_user_state);
+
+            // Now find shops in neighboring states
+            for (const neighbor of state_object.neighbors) {
+                // Normalize the neighbor state name in the same way
+                const normalized_neighbor_state = neighbor.split(' ')[0].toLowerCase();
+
+                const shops_in_neighbor_state = await shopModel.find({
+                    'profile.location.state': { $regex: `^${normalized_neighbor_state}`, $options: 'i' }
+                });
+                shops_near_me.push(...shops_in_neighbor_state);
+            }
+
+            return shops_near_me;
+        };
+
+        // Await the result from getShopsInNearbyStates function
+        const shops_near_me = await getShopsInNearbyStates();
+
+        console.log("Shops near you: ", shops_near_me);
+
+        return res.status(200).json({ nearby_stores: shops_near_me });
+
+    } catch (error) {
+        console.error("Error: ", error);
+        return res.status(500).json({ message: "Failed to get nearby shops" });
+    }
+};
+
 
 // BOOST STORE...
 
@@ -352,6 +562,14 @@ shops with followers > 10
 /*
 
 */
+exports.getBoostedShops = async (req, res) => {
+    try{
+        const shops = await shopModel.find({ is_boosted: true });
+        res.status(200).json({ shops });
+    }catch(error){
+        res.status(500).json({ message: "failed to get all boosted shops"})
+    }
+}
 
 
 

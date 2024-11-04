@@ -1,6 +1,7 @@
 var mongoose = require('mongoose'), Schema = mongoose.Schema;
 const bcrypt = require('bcryptjs');
 
+const ShopModel = require('../models/shopModel');
 
 const userSchema = new Schema({
   
@@ -43,7 +44,7 @@ const userSchema = new Schema({
 
     credits: {
         type: Number,
-        default: 0,
+        default: 10,
     },
 
     shop: {
@@ -129,6 +130,17 @@ userSchema.pre('save', async function (next) {
     this.password = await bcrypt.hash(this.password, salt);
     next();
 });
+
+
+// update user's shop once location changes...
+userSchema.pre('save', async function (next) {
+  if(!this.isModified('location')){
+    return next();
+  };
+  const shop = await ShopModel.findById(this.shop);
+  shop.profile.location = this.location
+  await shop.save();
+})
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);

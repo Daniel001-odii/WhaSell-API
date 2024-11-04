@@ -1,0 +1,53 @@
+FROM BAILEYS API
+Sending messages
+sending non media messages
+sending messages with link previews
+sending media messages (with images etc)
+
+forwarding messages
+Reading messages
+Updating user presence
+downloading media messags
+deleting messages
+updating messages
+modifying chats
+
+disappearing messages
+
+MISCELLANEOUS
+check if a given Id is on whatsapp
+get user online status using userID-phonenumber
+change your profile status
+change your profile name
+get display picture of some person or group
+to change your display picture or a groups
+to remove your display picture or group's
+to get someone's presence ('typing or online')
+to block or unblock user
+to get a business profile such as description or category
+
+to create a group
+to add or remove people to a group
+to change group's subject
+to change group's description
+to change group's settings
+to leave group
+
+to get invite code for a group
+query metadata for a group
+join group using invitation code
+
+
+to get privacy settings
+to update lastseen privacy
+update online privacy
+to update profile picture privacy
+
+send broadcast & stories
+
+
+
+
+RELEVANT LINKS
+https://www.postman.com/blue-escape-623818/baileys-api-v4/request/21qzys9/download-message-media?tab=body
+https://github.com/WhiskeySockets/Baileys

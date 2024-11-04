@@ -1,13 +1,13 @@
 const { bucket } = require('../config/firebase.config');
 
 
-const formidable = require('formidable');
+/* const formidable = require('formidable');
 
 // Function to initialize and configure formidable
 const initializeFormidable = () => {
   return formidable({ multiple: true });
 };
-
+ */
 const uploadProductImages = async (file) => {
     try {
       // Path to the image file on the local machine

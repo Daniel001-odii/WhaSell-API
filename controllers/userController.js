@@ -7,7 +7,8 @@ const { profileImageUpload } = require("../utils/uploadConfig");
 const getFullUrl = require('../utils/getFullPath');
 const userModel = require('../models/userModel');
 
-
+const axios = require('axios');
+require('dotenv').config();
 
 // get details user by middleware
 exports.getUserDetails = async (req, res) => {
@@ -102,3 +103,102 @@ exports.getUserLikedProducts = async (req, res) => {
         res.status(500).json({ message: "internal server error" });
     }
 }
+
+// Function to generate a reference for each payment
+const generateReference = () => {
+    return `ref_${Math.random().toString(36).substring(2, 15)}`;
+};
+
+exports.buyCoins = async (req, res) => {
+    try {
+        const userId = req.user;
+        const user = await userModel.findById(userId);
+        const email = user.email;
+
+        console.log("the user: ", user);
+
+        const { amount } = req.body;
+
+        // Check if required fields are present
+        if (!email || !amount || !userId) {
+            return res.status(400).json({ message: "Email, amount, and userId are required" });
+        }
+
+        const reference = generateReference();
+
+        // Initiate the payment with Paystack
+        const response = await axios.post(
+            'https://api.paystack.co/transaction/initialize',
+            {
+                email,
+                amount: amount * 100, // Paystack works in kobo, so multiply by 100 for Naira
+                reference,
+                callback_url: `${process.env.BASE_URL}/webhook/paystack` // Where Paystack will send transaction updates
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        // Redirect the user to Paystack's payment page
+        const { authorization_url } = response.data.data;
+        res.status(200).json({ payment_url: authorization_url });
+
+    } catch (error) {
+        console.error("Error initializing Paystack transaction: ", error);
+        res.status(500).json({ message: "Failed to initialize transaction" });
+    }
+};
+
+
+exports.paystackWebhook = async (req, res) => {
+    try {
+        const { event, data } = req.body;
+
+        console.log("event : ", event, "data: ", data);
+
+        if (event === "charge.success") {
+            const { reference, amount, customer: { email } } = data;
+
+            // Find the user based on the email or reference
+            const user = await User.findOne({ email });
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+
+            // Assign coins based on the amount paid
+            const coinsBought = amount / 100; // Convert amount back to Naira
+            user.credits = (user.credits || 0) + coinsBought;
+
+            // Save the user's updated coin balance
+            await user.save();
+
+            // Respond to Paystack that the webhook was received successfully
+            return res.status(200).json({ message: "Transaction verified, coins added" });
+        } else {
+            // If event is not relevant, respond accordingly
+            return res.status(400).json({ message: "Event not handled" });
+        }
+    } catch (error) {
+        console.error("Error handling Paystack webhook: ", error);
+        res.status(500).json({ message: "Webhook handling failed" });
+    }
+};
+
+
+
+// FOR ANALYTICS...
+// getFollowersCount...
+
+// getproductViews...
+
+// getLikedProducts...
+
+// getCountForsalesByCategory...
+
+// getNo.OfShopVisitors...
+
+// getProductsSold against Time(month, week, day)
