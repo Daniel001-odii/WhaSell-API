@@ -42,10 +42,10 @@ const userSchema = new Schema({
     googleId: Number,
     // PROVIDER AND GOOGLE ID ENDS HERE...
 
-    credits: {
+   /*  credits: {
         type: Number,
         default: 10,
-    },
+    }, */
 
     shop: {
       type:mongoose.Schema.Types.ObjectId, ref: 'Shop'
