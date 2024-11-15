@@ -115,6 +115,8 @@ exports.getUserWallet = async (req, res) => {
             return res.status(200).json({ wallet });
         }
 
+        wallet.transactions = wallet.transactions.reverse();
+
         res.status(200).json({ wallet });
     }catch(error){
         console.log("error getting user wallet: ", error);

@@ -4,6 +4,7 @@ const router = express.Router();
 const  { protect } = require("../middlewares/authMiddleware");
 
 const productController = require('../controllers/productController');
+const { checkcoins } = require("../middlewares/coins.middleware");
 
 // routes goes here...
 router.get('', productController.getAllProducts);
@@ -14,7 +15,7 @@ router.get('', productController.getAllProducts);
 router.get('/:product_id', productController.getProductById);
 
 // upload new product
-router.post('/new', protect, productController.newProduct);
+router.post('/new', protect, checkcoins, productController.newProduct);
 
 
 // IMAGE HANDLERS...
@@ -48,7 +49,7 @@ router.post('/video', productController.uploadGlipVideo);
 router.get('/glips/:shop_id/all', productController.getGlipsByShopId);
 
 // upload new glip video
-router.post('/glips/new', protect, productController.newGlipVideo);
+router.post('/glips/new', protect, checkcoins, productController.newGlipVideo);
 
 
 

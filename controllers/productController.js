@@ -8,6 +8,7 @@ const multer = require('multer');
 
 const upload = require('../utils/uploadConfig');
 
+const walletModel = require('../models/walletModel');
 
 // new import...
 const { productImageUpload } = require('../utils/uploadConfig');
@@ -205,13 +206,18 @@ exports.newGlipVideo = async (req, res) => {
     }
 }
 
+/* 
+uploading a single product deducts 2 coins from the user's balance...
+*/
 exports.newProduct = async (req, res) => {
   try{
       const user_id = req.user;
       const user = await User.findById(user_id).populate();
 
       const { name, description, category, images, condition, price, charge_for_delivery, price_negotiable, delivery_fee } = req.body;
-      console.log('client: ', req.body)
+      console.log('client: ', req.body);
+
+
       const new_product = new Product({
           name,
           description,
@@ -225,7 +231,33 @@ exports.newProduct = async (req, res) => {
           shop: user.shop,
       });
 
+      
+
+      // perform coins deduction here and send transaction logs too...
+      // check coin balance...
+      const wallet = await walletModel.findOne({ user: user_id });
+      const user_balance = wallet.balance;
+
+      // check for low coin balance...
+     /*  if(user_balance == 0){
+          console.log("insufficient coins balance please top-up!");
+          return res.status(400).json({ message: "insufficient coin balance, please purchase more coins!"})
+      } */
+      
+      const upload_fee = 2
+      const wallet_balance = user_balance - upload_fee;
+      wallet.balance = wallet_balance;
+
+      const today = new Date();
+      wallet.debit_transactions.push({
+        date: today,
+        coin_amount: upload_fee,
+        narration: 'debit for product listing'
+      })
+      await wallet.save();
       await new_product.save();
+
+
 
       res.status(200).json({ message: "New product uploaded successfully!", product: new_product, user });
 

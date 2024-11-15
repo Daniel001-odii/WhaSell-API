@@ -15,6 +15,16 @@ const walletSchema = new mongoose.Schema({
     enum: ["active", "onhold", "blocked"],
     default: "active"
   },
+
+  debit_transactions: [{
+    date: {
+      type: Date,
+      default: Date.now()
+    },
+    coin_amount: Number,
+    narration: String,
+  }],
+
   transactions: [{
     date: {
         type: Date,
