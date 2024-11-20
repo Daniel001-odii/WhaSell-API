@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const Shop = require('../models/shopModel');
+const sendEmail = require('../utils/sendEmail');
 
 const generateAccessToken = (user) => {
     return jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30d' });
@@ -51,6 +52,20 @@ exports.register = async (req, res) => {
 
         // save tokens to cookies
         setAuthCookies(res, accessToken, refreshToken);
+
+        const mail_options = {
+            emailTo: email,
+            subject: "Yes you did it, welcome onboard!",
+            html: `
+                <html>
+                    <body>
+                        <h1>YOU SIGNED-UP HAHAHA</h1>
+                    </body>
+                </html>
+            `
+        };
+
+        await sendEmail(mail_options);
 
 
         res.status(201).json({ message: 'User registered and logged-in successfully' });
@@ -105,6 +120,23 @@ exports.registerSeller = async (req, res) => {
         // save tokens to cookies
         setAuthCookies(res, accessToken, refreshToken);
 
+
+        
+        const mail_options = {
+            emailTo: email,
+            subject: "Yes you did it, welcome onboard!",
+            html: `
+                <html>
+                    <body>
+                        <h1>YOU SIGNED-UP HAHAHA</h1>
+                    </body>
+                </html>
+            `
+        };
+
+        await sendEmail(mail_options);
+        
+
         res.status(201).json({ message: 'User registered and logged-in successfully' });
 
     } catch (error) {
@@ -140,6 +172,20 @@ exports.login = async (req, res) => {
 
         // set access and refresh token to cookies...
         setAuthCookies(res, accessToken, refreshToken);
+
+        const mail_options = {
+            emailTo: usernameOrEmailOrPhone,
+            subject: "New Login",
+            html: `
+                <html>
+                    <body>
+                        <h1>YOU LOGGED IN HAHAHA</h1>
+                    </body>
+                </html>
+            `
+        };
+
+        await sendEmail(mail_options);
 
         // Respond with success message
         res.json({ message: "Login successful!" });
