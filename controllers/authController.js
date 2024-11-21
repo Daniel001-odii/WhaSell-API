@@ -135,7 +135,7 @@ exports.registerSeller = async (req, res) => {
         };
 
         await sendEmail(mail_options);
-        
+
 
         res.status(201).json({ message: 'User registered and logged-in successfully' });
 
@@ -174,7 +174,7 @@ exports.login = async (req, res) => {
         setAuthCookies(res, accessToken, refreshToken);
 
         const mail_options = {
-            emailTo: usernameOrEmailOrPhone,
+            emailTo: user.email,
             subject: "New Login",
             html: `
                 <html>
