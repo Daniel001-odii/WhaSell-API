@@ -107,6 +107,10 @@ const userSchema = new Schema({
       type:mongoose.Schema.Types.ObjectId, ref: 'Shop'
     }],
 
+    followed_shops: [{
+      type:mongoose.Schema.Types.ObjectId, ref: 'Shop'
+    }],
+
     // settings starts here....
     settings: {
       notifications: {

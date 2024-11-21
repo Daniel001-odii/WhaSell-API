@@ -39,5 +39,10 @@ router.get("/shops/boosted/all", shopController.getBoostedShops);
 
 router.get("/shops/data/analytics", protect, shopController.getShopsAnalytics);
 
+// get glips from followed shops..
+router.get("/shops/followed/all", protect, shopController.getGlipsByFollowedShops);
+
+
+
 module.exports = router;
 

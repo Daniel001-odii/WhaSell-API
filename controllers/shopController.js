@@ -19,6 +19,8 @@ const getFullUrl = require('../utils/getFullPath');
 const shopModel = require("../models/shopModel");
 
 const nearbyStates = require('../utils/statesAndNeighbors.js');
+const glipModel = require("../models/glipModel.js");
+const userModel = require("../models/userModel");
 
 // Controller to change shop profile image
 /* exports.changeShopImage = async (req, res) => {
@@ -232,6 +234,8 @@ exports.followStore = async (req, res) => {
         const shop_id = req.params.shop_id;
         const user_id = req.user; // Assuming user ID is available in req.user
 
+        const user = await userModel.findById(user_id);
+
         let shop = await Shop.findById(shop_id);
 
         if (!shop) {
@@ -243,10 +247,16 @@ exports.followStore = async (req, res) => {
         if (userIndex > -1) {
             shop.followers.splice(userIndex, 1);
             await shop.save();
+
+            user.followed_shops.splice(user.followed_shops.indexOf(shop_id), 1)
+            await user.save();
             return res.status(200).json({ success: true, message: "You unfollowed this shop" });
         } else {
             shop.followers.push(user_id);
             await shop.save();
+
+            user.followed_shops.push(shop_id)
+            await user.save();
             return res.status(201).json({ success: false, message: "You are now following this shop" });
         }
 
@@ -533,6 +543,25 @@ exports.getShopsInNearByStates = async (req, res) => {
         return res.status(500).json({ message: "Failed to get nearby shops" });
     }
 };
+
+
+// get glips from followed shops...
+exports.getGlipsByFollowedShops = async (req, res) => {
+    try{
+        const user_id = req.user;
+        const user = await userModel.findById(user_id);
+
+        const followed_shops = await shopModel.find({ _id: { $in: user.followed_shops }});
+        
+        const glips = await glipModel.find({ shop: { $in: user.followed_shops }});
+
+        res.status(200).json({ glips, followed_shops });
+       
+ 
+    }catch(error){
+        res.status(500).json({ message: "error getting glips from followed shops"});
+    }
+}
 
 
 // BOOST STORE...
