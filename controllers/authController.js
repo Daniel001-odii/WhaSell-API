@@ -183,11 +183,46 @@ exports.registerSeller = async (req, res) => {
             emailTo: email,
             subject: "Yes you did it, welcome onboard!",
             html: `
-                <html>
-                    <body>
-                        <h1>YOU SIGNED-UP HAHAHA</h1>
-                    </body>
-                </html>
+                <!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333333;">
+  <table style="border-spacing: 0; width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <!-- Header Section -->
+    <tr>
+      <td style="text-align: center; padding: 20px;">
+        <img src="https://raw.githubusercontent.com/Daniel001-odii/WhaSell/refs/heads/main/src/assets/images/WhatSell-hand.png" alt="WhatSell Header" style="display: block; max-width: 100%; height: auto;">
+      </td>
+    </tr>
+
+    <!-- Body Content -->
+    <tr>
+      <td style="padding: 20px;">
+        <h1 style="margin: 0 0 20px;">Welcome to WhatSell!</h1>
+        <p style="margin: 0 0 20px;">Thank you for joining WhatSell, where modern e-commerce is redefined. We are thrilled to have you on board. Start exploring our features and find the best deals today!</p>
+        <p style="margin: 0;"><a href="#" style="color: #007BFF; text-decoration: none;">Visit Our Website</a></p>
+      </td>
+    </tr>
+
+    <!-- Footer Section -->
+    <tr>
+      <td style="background-color: #f4f4f4; text-align: center; padding: 10px; font-size: 12px; color: #666666;">
+        <p style="margin: 0 0 10px;">Follow us on:</p>
+        <div style="margin: 0 0 10px;">
+          <a href="https://facebook.com" target="_blank" style="margin: 0 10px; color: #666666; font-size: 16px; text-decoration: none;">Facebook</a> |
+          <a href="https://twitter.com" target="_blank" style="margin: 0 10px; color: #666666; font-size: 16px; text-decoration: none;">Twitter</a> |
+          <a href="https://instagram.com" target="_blank" style="margin: 0 10px; color: #666666; font-size: 16px; text-decoration: none;">Instagram</a>
+        </div>
+        <p style="margin: 0;">&copy; 2025 WhatSell. All rights reserved.</p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+
             `
         };
 
