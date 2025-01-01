@@ -30,6 +30,7 @@ const walletSchema = new mongoose.Schema({
         type: Date,
         default: Date.now()
     },
+    narration: String,
     amount: Number,
     reference: String,
     status: {

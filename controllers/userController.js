@@ -24,6 +24,11 @@ exports.getUserDetails = async (req, res) => {
                 user,
             });
             await wallet.save();
+        };
+        if(!user.refferal_code){
+            let refferal_code = `ref_${Math.random().toString(36).substring(2, 15)}`;
+            user.refferal_code = refferal_code.slice(0, 9);
+            await user.save();
         }
 
         // user.credits = wallet.balance;
@@ -193,9 +198,10 @@ exports.buyCoins = async (req, res) => {
          const wallet = await walletModel.findOne({ user: userId });
          wallet.transactions.push(
              {
-                 date: today,
-                 amount,
-                 reference,
+                narration: 'paid purchase',
+                date: today,
+                amount,
+                reference,
              }
          );
 
@@ -371,6 +377,21 @@ exports.paystackWebhook = async (req, res) => {
     }
 };
 
+
+/* 
+    REFER A FRIEND TO GET 30 COINS >>>
+*/
+
+exports.getReferralLink = async (req, res) => {
+    try{
+        const user_ref_code = req.userModel.refferal_code;
+        let refferal_link = `${process.env.APP_URL}/refer/${user_ref_code}`;
+        res.status(200).json({ refferal_link });
+    }catch(error){
+        console.log("error getting referral link: ", error);
+        res.status(500).json({ message: "internal server error" });
+    }
+};
 
 
 // FOR ANALYTICS...

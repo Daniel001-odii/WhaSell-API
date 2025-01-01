@@ -1,5 +1,4 @@
 const nodemailer = require("nodemailer");
-const SMTPTransport = require("nodemailer/lib/smtp-transport");
 
 let transporter;
 

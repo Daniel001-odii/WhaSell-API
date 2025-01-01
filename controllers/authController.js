@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const Shop = require('../models/shopModel');
 const sendEmail = require('../utils/sendEmail');
+const walletModel = require('../models/walletModel');
 
 const generateAccessToken = (user) => {
     return jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30d' });
@@ -27,8 +28,53 @@ const setAuthCookies = (res, access_token, refresh_token) => {
 
 }
 
+
+const addRefferalBonus = async (refferal_code, username) => {
+    try{
+        const refferal_bonus = 10;
+        const refferal_user = await User.findOne({ refferal_code });
+        const wallet = await walletModel.findOne({ user: refferal_user._id });
+
+        console.log("found owner wallet: ", wallet);
+        
+        const email = refferal_user.email;
+
+        if(refferal_user){
+            wallet.balance = Number(wallet.balance) + Number(refferal_bonus);
+            wallet.transactions.push(
+                {
+                    status: 'successful',
+                    amount: refferal_bonus,
+                    date: new Date(),
+                    narration: 'Refferal Bonus',
+                }
+            );
+            await wallet.save();
+
+            // send email to refferal user...
+            const mail_options = {
+                emailTo: email,
+                subject: "Yes you did it, welcome onboard!",
+                html: `
+                    <html>
+                        <body>
+                            <h1>GOOD JOB - YOU REFFERED ${username.toUpperCase()}</h1>
+                        </body>
+                    </html>
+                `
+            };
+
+        await sendEmail(mail_options);
+    }
+    }catch(error){
+        throw error
+    }
+    
+};
+
 exports.register = async (req, res) => {
-    const { username, password, email, phone } = req.body;
+    const { refferal_code, username, password, email, phone } = req.body;
+    console.log("refferal code: ", refferal_code);
     try {
         const user = new User({ email, username, password, phone });
 
@@ -67,6 +113,16 @@ exports.register = async (req, res) => {
 
         await sendEmail(mail_options);
 
+        /* 
+            award refferal bonus to user...
+        */
+         if(refferal_code){
+            /* 
+                util function to award refferal bonus to user...
+            */
+           await addRefferalBonus(refferal_code, username);
+         }
+
 
         res.status(201).json({ message: 'User registered and logged-in successfully' });
 
@@ -77,7 +133,8 @@ exports.register = async (req, res) => {
 };
 
 exports.registerSeller = async (req, res) => {
-    const { username, password, email, phone, shop_name, shop_category, shop_description } = req.body;
+    const { refferal_code, username, password, email, phone, shop_name, shop_category, shop_description } = req.body;
+    console.log("refferal code: ", refferal_code);
     try {
         const user = new User({ 
             email, 
@@ -135,6 +192,21 @@ exports.registerSeller = async (req, res) => {
         };
 
         await sendEmail(mail_options);
+
+        /* 
+            award refferal bonus to user...
+        */
+      
+
+       if(refferal_code){
+        /* 
+            util function to award refferal bonus to user...
+        */
+            await addRefferalBonus(refferal_code, username);
+
+       }
+       
+
 
 
         res.status(201).json({ message: 'User registered and logged-in successfully' });

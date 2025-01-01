@@ -110,6 +110,7 @@ const userSchema = new Schema({
     followed_shops: [{
       type:mongoose.Schema.Types.ObjectId, ref: 'Shop'
     }],
+    refferal_code: String,
 
     // settings starts here....
     settings: {
