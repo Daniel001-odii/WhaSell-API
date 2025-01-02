@@ -14,4 +14,8 @@ router.get('/protected', protect, (req, res) => {
     res.json({ message: 'This is a protected route' });
 });
 
+
+router.post('/password_reset/link', authController.sendPasswordResetLink);
+router.post('/password_reset', authController.resetPassword);
+
 module.exports = router;

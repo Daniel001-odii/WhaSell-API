@@ -3,6 +3,7 @@ const User = require('../models/userModel');
 const Shop = require('../models/shopModel');
 const sendEmail = require('../utils/sendEmail');
 const walletModel = require('../models/walletModel');
+const userModel = require('../models/userModel');
 
 const generateAccessToken = (user) => {
     return jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30d' });
@@ -26,12 +27,14 @@ const setAuthCookies = (res, access_token, refresh_token) => {
     // res.cookie('accessToken', access_token, { httpOnly: true, maxAge: 15 * 60 * 1000 });
     // res.cookie('refreshToken', refresh_token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
-}
+};
+
+const { EMAIL_FOOTER_SECTION, EMAIL_HEADER_SECTION } = require('../utils/emailTemplates');
 
 
 
 
-const EMAIL_HEADER_SECTION = `
+/* const EMAIL_HEADER_SECTION = `
     <tr>
       <td style="text-align: center; padding: 20px; overflow: hidden; height: 100px; background: url('https://raw.githubusercontent.com/Daniel001-odii/WhaSell/refs/heads/main/src/assets/images/whatsell_email_header.png'); 
       background-position: center;
@@ -68,7 +71,7 @@ const EMAIL_FOOTER_SECTION = `
       </td>
     </tr>
 `;
-
+ */
 const addRefferalBonus = async (refferal_code, username) => {
     try{
         const refferal_bonus = 10;
@@ -142,23 +145,22 @@ const addRefferalBonus = async (refferal_code, username) => {
 
 
 exports.login = async (req, res) => {
-    const { usernameOrEmailOrPhone, password } = req.body;
+    const { emailOrPhone, password } = req.body;
     try {
         // Find user by either username, email, or phone
         const user = await User.findOne({
             $or: [
-                { username: usernameOrEmailOrPhone },
-                { email: usernameOrEmailOrPhone },
-                { phone: usernameOrEmailOrPhone }
+                { email: emailOrPhone },
+                { phone: emailOrPhone }
             ]
         });
 
-        const username = user.username;
-
         // Check if user exists and password is correct
         if (!user || !(await user.matchPassword(password))) {
-            return res.status(401).json({ message: 'Invalid credentials' });
+            return res.status(401).json({ message: 'Invalid credentials provided' });
         }
+        
+        const username = user.username;
 
         // Generate tokens
         const accessToken = generateAccessToken(user);
@@ -467,3 +469,140 @@ exports.logout = async (req, res) => {
         res.status(500).json({ message: 'Error logging out', error });
     }
 };
+
+
+/* 
+    send password reset link
+*/
+exports.sendPasswordResetLink = async (req, res) => {
+    try{
+        const { email } = req.body;
+        const user = await userModel.findOne({ email });
+
+        if(!user){
+            return res.status(404).json({ message: "Password reset link will be sent if your email matches our record"});
+        };
+
+        // Set an expiration time for the reset token (e.g., 1 hour)
+        const username = user.username;
+        const expiry_date = Date.now() + 3600000; // 1 hour
+        const token = `${Math.random().toString(36).substring(0, 10)}`;
+        const pass_reset = {
+            token,
+            expiry_date
+        };
+
+        user.pass_reset = pass_reset;
+        await user.save();
+
+        const reset_link = `${process.env.APP_URL}/password_reset?token=${token}`;
+
+        // send rest email here...
+        const mail_options = {
+            emailTo: user.email,
+            subject: "Login Alert",
+            html: `
+                  <!DOCTYPE html>
+                    <html>
+                        <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        </head>
+                        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333333;">
+                        <table style="border-spacing: 0; width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                            <!-- Header Section -->
+                            ${EMAIL_HEADER_SECTION}
+
+                            <!-- Body Content -->
+                            <tr>
+                            <td style="padding: 20px;">
+                                <p style="margin: 0 0 20px;">Hi ${username},</p>
+                                <p style="margin: 0 0 20px;">Forgot your password? No worries, weve got you covered.</p>
+                                <p style="margin: 0 0 20px;">Click the button below to reset your password.</p>
+                                <a href=${reset_link}>
+                                 <button style=" font-size: 13px; padding: 5px; border-radius: 5px; color: white; border: none; background: #47C67F">Reset Password</button>
+                                </a>
+                                <p style="padding: 5px 0px;>if you didnt request this, please ignore this email or let us know immediately.</p>
+                            </td>
+                            </tr>
+
+                            <!-- Footer Section -->
+                            ${EMAIL_FOOTER_SECTION}
+
+                        </table>
+                        </body>
+                    </html>
+            `
+        };
+
+        await sendEmail(mail_options);
+
+        res.status(200).json({ message: "Password reset link sent successfully!"})
+
+
+    }catch(error){
+        res.status(500).json({ message: "error sending password reset link"});
+        console.log("error sending password reset link: ", error);
+    }
+};
+
+
+exports.resetPassword = async (req, res) => {
+    try{
+        const { token, password } = req.body;
+        const user = await userModel.findOne({ 
+            'pass_reset.token': token,
+            'pass_reset.expiry_date': { $gt: new Date() } 
+        });
+
+        if(!user){
+            return res.status(401).json({ message: "invalid reset token provided"});
+        }
+        
+        user.pass_reset = {
+            token: null,
+            expiry_date: null
+        };
+        user.password = password;
+        await user.save();
+
+        // send email reset success mail..
+        const mail_options = {
+            emailTo: user.email,
+            subject: "Password Reset Successful",
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                </head>
+                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333333;">
+                <table style="border-spacing: 0; width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                <!-- Header Section -->
+                    ${EMAIL_HEADER_SECTION}
+
+                    <!-- Body Content -->
+                    <tr>
+                    <td style="padding: 20px;">
+                        <p style="margin: 0 0 20px;">Hi ${user.username},</p>
+                        <p style="margin: 0 0 20px;">Your password has been successfully reset.</p>
+                        <p style="margin: 0 0 20px;">If you did not request this change, please contact our support team immediately.</p>
+                    </td>
+                    </tr>
+
+                    <!-- Footer Section -->
+                    ${EMAIL_FOOTER_SECTION}
+                </table>
+                </body>
+                </html>
+            `
+        };
+
+        await sendEmail(mail_options);
+
+    }catch(error){
+        res.status(500).json({ message: "error resetting password"});
+        console.log("error resetting password: ", error);
+    }
+}
