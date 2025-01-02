@@ -11,6 +11,43 @@ const axios = require('axios');
 const walletModel = require('../models/walletModel');
 require('dotenv').config();
 
+
+/*
+    check email and phone number if it already exists
+ */
+exports.checkExistingEmail = async (req, res) => {
+    try{
+        console.log("checking email...")
+        const {email} = req.body;
+        console.log("client sent email: ", email)
+        const existingEmail = await userModel.findOne({ email });
+        if(existingEmail){
+            return res.status(400).json({ message: "Sorry email already exists"});
+        }
+
+        res.status(201).json({ message: "email accepted!"})
+    }catch(error){
+        res.status(500).json({ error });
+    }
+};
+
+
+exports.checkExistingPhone = async (req, res) => {
+    try{
+        console.log("checking phone...")
+        const phone = req.params.phone;
+        const existingPhone = await userModel.findOne({ phone });
+        if(existingPhone){
+            return res.status(400).json({ message: "Sorry phone number already exists"});
+        }
+
+        res.status(200).json({ message: "email accepted!"})
+    }catch(error){
+        res.status(500).json({ message: "error checking phone number", error });
+    }
+};
+
+
 // get details user by middleware
 exports.getUserDetails = async (req, res) => {
     try{

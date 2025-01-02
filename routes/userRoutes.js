@@ -17,6 +17,10 @@ router.get('/user/likes', protect, userController.getUserLikedProducts);
 // user wallet..
 router.get('/user/wallet', protect, userController.getUserWallet);
 
+// client data checks...
+router.post('/user/email_check', userController.checkExistingEmail);
+router.get('/user/phone_check/:phone', userController.checkExistingPhone);
+
 
 // PAYSTACK...
 router.post('/user/buy_coins', protect, userController.buyCoins);

@@ -564,6 +564,22 @@ exports.getGlipsByFollowedShops = async (req, res) => {
 }
 
 
+/* 
+    check if shop name already exists..
+*/
+exports.checkExistingShopName = async (req, res) => {
+    try{
+        const name = req.params.shop_name;
+        const exisitngShop = await Shop.findOne({ name });
+        if(exisitngShop){
+            return res.status(400).json({ message: "Sorry shop name already exist"})
+        }
+        res.status(200).json({ message: "shop name accepted"});
+    }catch(error){
+        res.status(500).json({ message: "error checking for shop name" });
+    }
+};
+
 // BOOST STORE...
 
 

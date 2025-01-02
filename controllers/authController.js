@@ -144,6 +144,13 @@ exports.registerSeller = async (req, res) => {
             account_type: 'seller', 
         });
 
+        
+
+        const exisitingShopName = await Shop.findOne({ name: shop_name });
+        if(exisitingShopName){
+            return res.status(400).json({ message: "sorry shop name already exist" });
+        }
+
         // auto create new shop for user...
         const shop = new Shop({
             name: shop_name,
