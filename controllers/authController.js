@@ -29,6 +29,46 @@ const setAuthCookies = (res, access_token, refresh_token) => {
 }
 
 
+
+
+const EMAIL_HEADER_SECTION = `
+    <tr>
+      <td style="text-align: center; padding: 20px; overflow: hidden; height: 100px; background: url('https://raw.githubusercontent.com/Daniel001-odii/WhaSell/refs/heads/main/src/assets/images/whatsell_email_header.png'); 
+      background-position: center;
+      background-size: contain;">
+      </td>
+    </tr>
+`;
+
+const EMAIL_FOOTER_SECTION = `
+    <tr>
+        <td style="padding: 20px">
+            <p>Thank you for using WhatSell!<br/>
+                Best regards,<br/>
+                The WhatSell Team.
+            </p>
+        </td>
+    </tr>
+    <tr>
+      <td style="background-color: #f4f4f4; text-align: left; padding: 20px; font-size: 12px; color: #666666;">
+        <p style="margin: 0 0 10px;">Follow us on:</p>
+        <div style="margin: 0 0 10px;">
+          <a href="https://facebook.com" target="_blank" style="text-decoration: none; margin-right: 3px;">
+            <img src="https://raw.githubusercontent.com/Daniel001-odii/WhaSell/refs/heads/main/src/assets/images/whatsell_fb.png" alt="whatsell_social" max-height="100%" width="auto" />
+          </a> 
+          <a href="https://twitter.com" target="_blank" style="text-decoration: none; margin-right: 3px;">
+            <img src="https://raw.githubusercontent.com/Daniel001-odii/WhaSell/refs/heads/main/src/assets/images/whatsell_x.png" alt="whatsell_social" max-height="100%" width="auto"/>
+          </a>
+          <a href="https://instagram.com" target="_blank" style="text-decoration: none; margin-right: 3px;">
+            <img src="https://raw.githubusercontent.com/Daniel001-odii/WhaSell/refs/heads/main/src/assets/images/whatsell_insta.png" alt="whatsell_social" max-height="100%" width="auto" />
+          </a>
+        </div>
+        <p style="margin: 0;">&copy; 2025 WhatSell. All rights reserved.</p>
+        <p style="margin: 0;">WhatSell Nigeria.</p>
+      </td>
+    </tr>
+`;
+
 const addRefferalBonus = async (refferal_code, username) => {
     try{
         const refferal_bonus = 10;
@@ -51,15 +91,43 @@ const addRefferalBonus = async (refferal_code, username) => {
             );
             await wallet.save();
 
+            const referralMailOptions = {
+                emailTo: email,
+                
+                
+            };
+
+            await sendEmail(referralMailOptions);
             // send email to refferal user...
             const mail_options = {
                 emailTo: email,
-                subject: "Yes you did it, welcome onboard!",
+                subject: "You've Earned a Referral Bonus! 🎈",
                 html: `
+                    <!DOCTYPE html>
                     <html>
-                        <body>
-                            <h1>GOOD JOB - YOU REFFERED ${username.toUpperCase()}</h1>
-                        </body>
+                    <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    </head>
+                    <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333333;">
+                    <table style="border-spacing: 0; width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                    <!-- Header Section -->
+                        ${EMAIL_HEADER_SECTION}
+
+                        <!-- Body Content -->
+                        <tr>
+                        <td style="padding: 20px;">
+                            <h1 style="margin: 0 0 20px;">Congratulations! 🎈</h1>
+                            <p style="margin: 0 0 20px;">Hi ${refferal_user.username},</p>
+                            <p style="margin: 0 0 20px;">You have successfully referred ${username} to WhatSell and earned a referral bonus of ${refferal_bonus} credits.</p>
+                            <p style="margin: 0 0 20px;">Thank you for spreading the word about WhatSell!</p>
+                        </td>
+                        </tr>
+
+                        <!-- Footer Section -->
+                        ${EMAIL_FOOTER_SECTION}
+                    </table>
+                    </body>
                     </html>
                 `
             };
@@ -73,36 +141,6 @@ const addRefferalBonus = async (refferal_code, username) => {
 };
 
 
-const EMAIL_HEADER_SECTION = `
-    <tr>
-      <td style="text-align: center; padding: 20px; overflow: hidden; height: 100px; background: url('https://raw.githubusercontent.com/Daniel001-odii/WhaSell/refs/heads/main/src/assets/images/whatsell_email_header.png'); 
-      background-position: center;
-      background-size: contain;">
-      </td>
-    </tr>
-`;
-
-const EMAIL_FOOTER_SECTION = `
-    <tr>
-        <td style="padding: 20px">
-            <p>Thank you for using WhatSell!<br/>
-                Best regards,<br/>
-                The WhatSell Team.
-            </p>
-        </td>
-    </tr>
-    <tr>
-      <td style="background-color: #f4f4f4; text-align: center; padding: 10px; font-size: 12px; color: #666666;">
-        <p style="margin: 0 0 10px;">Follow us on:</p>
-        <div style="margin: 0 0 10px;">
-          <a href="https://facebook.com" target="_blank" style="margin: 0 10px; color: #666666; font-size: 16px; text-decoration: none;">Facebook</a> |
-          <a href="https://twitter.com" target="_blank" style="margin: 0 10px; color: #666666; font-size: 16px; text-decoration: none;">Twitter</a> |
-          <a href="https://instagram.com" target="_blank" style="margin: 0 10px; color: #666666; font-size: 16px; text-decoration: none;">Instagram</a>
-        </div>
-        <p style="margin: 0;">&copy; 2025 WhatSell. All rights reserved.</p>
-      </td>
-    </tr>
-`
 exports.login = async (req, res) => {
     const { usernameOrEmailOrPhone, password } = req.body;
     try {
@@ -220,7 +258,7 @@ exports.register = async (req, res) => {
                     <!-- Body Content -->
                     <tr>
                     <td style="padding: 20px;">
-                        <h1 style="margin: 0 0 20px;">Hi ${username}!</h1>
+                        <h1 style="margin: 0 0 20px;">Welcome to WhatSell!</h1>
                         <p style="margin: 0 0 20px;">Thank you for joining WhatSell, where modern e-commerce is redefined. We are thrilled to have you on board. Start exploring our features and find the best deals today!</p>
                         <p style="margin: 0;"><a href="#" style="color: #007BFF; text-decoration: none;">Visit Our Website</a></p>
                     </td>

@@ -302,35 +302,35 @@ axios.get(url, options)
  */
 
 
-  const creditUSerCoins = async (userId, no_of_coins_to_credit, reference, status) => {
-    try {
-      const wallet = await walletModel.findOne({ user: userId });
-  
-      if (!wallet) {
-        throw new Error("Wallet not found for the user");
-      }
-  
-      // Update balance
-      wallet.balance += Number(no_of_coins_to_credit);
-  
-      // Find transaction by reference
-      const transaction = wallet.transactions.find((txn) => txn.reference === reference && txn.status == 'pending');
-  
-      if (transaction) {
-        // Update transaction status if found
-        transaction.status = status;
-      } else {
-        throw new Error("Transaction not found with the provided reference");
-      }
-  
-      await wallet.save();
-  
-      console.log("User coins credited:", userId, no_of_coins_to_credit);
-    } catch (error) {
-      console.error("Error crediting user coins:", error);
-      throw error;
+const creditUSerCoins = async (userId, no_of_coins_to_credit, reference, status) => {
+try {
+    const wallet = await walletModel.findOne({ user: userId });
+
+    if (!wallet) {
+    throw new Error("Wallet not found for the user");
     }
-  };
+
+    // Update balance
+    wallet.balance += Number(no_of_coins_to_credit);
+
+    // Find transaction by reference
+    const transaction = wallet.transactions.find((txn) => txn.reference === reference && txn.status == 'pending');
+
+    if (transaction) {
+    // Update transaction status if found
+    transaction.status = status;
+    } else {
+    throw new Error("Transaction not found with the provided reference");
+    }
+
+    await wallet.save();
+
+    console.log("User coins credited:", userId, no_of_coins_to_credit);
+} catch (error) {
+    console.error("Error crediting user coins:", error);
+    throw error;
+}
+};
   
 
 exports.checkPaymentStatus = async (req, res) => {
@@ -411,22 +411,6 @@ exports.paystackWebhook = async (req, res) => {
     } catch (error) {
         console.error("Error handling Paystack webhook: ", error);
         res.status(500).json({ message: "Webhook handling failed" });
-    }
-};
-
-
-/* 
-    REFER A FRIEND TO GET 30 COINS >>>
-*/
-
-exports.getReferralLink = async (req, res) => {
-    try{
-        const user_ref_code = req.userModel.refferal_code;
-        let refferal_link = `${process.env.APP_URL}/refer/${user_ref_code}`;
-        res.status(200).json({ refferal_link });
-    }catch(error){
-        console.log("error getting referral link: ", error);
-        res.status(500).json({ message: "internal server error" });
     }
 };
 
