@@ -74,15 +74,24 @@ const addRefferalBonus = async (refferal_code, username) => {
 
 
 const EMAIL_HEADER_SECTION = `
-<tr>
-      <td style="text-align: center; padding: 20px;">
-        <img src="https://raw.githubusercontent.com/Daniel001-odii/WhaSell/refs/heads/main/src/assets/images/whatsell_email_header.png" alt="WhatSell Header image" style="display: block; max-height: 100px; width: auto;">
+    <tr>
+      <td style="text-align: center; padding: 20px; overflow: hidden; height: 100px; background: url('https://raw.githubusercontent.com/Daniel001-odii/WhaSell/refs/heads/main/src/assets/images/whatsell_email_header.png'); 
+      background-position: center;
+      background-size: contain;">
       </td>
     </tr>
 `;
 
 const EMAIL_FOOTER_SECTION = `
-<tr>
+    <tr>
+        <td style="padding: 20px">
+            <p>Thank you for using WhatSell!<br/>
+                Best regards,<br/>
+                The WhatSell Team.
+            </p>
+        </td>
+    </tr>
+    <tr>
       <td style="background-color: #f4f4f4; text-align: center; padding: 10px; font-size: 12px; color: #666666;">
         <p style="margin: 0 0 10px;">Follow us on:</p>
         <div style="margin: 0 0 10px;">
@@ -94,6 +103,77 @@ const EMAIL_FOOTER_SECTION = `
       </td>
     </tr>
 `
+exports.login = async (req, res) => {
+    const { usernameOrEmailOrPhone, password } = req.body;
+    try {
+        // Find user by either username, email, or phone
+        const user = await User.findOne({
+            $or: [
+                { username: usernameOrEmailOrPhone },
+                { email: usernameOrEmailOrPhone },
+                { phone: usernameOrEmailOrPhone }
+            ]
+        });
+
+        const username = user.username;
+
+        // Check if user exists and password is correct
+        if (!user || !(await user.matchPassword(password))) {
+            return res.status(401).json({ message: 'Invalid credentials' });
+        }
+
+        // Generate tokens
+        const accessToken = generateAccessToken(user);
+        const refreshToken = generateRefreshToken(user);
+        user.refreshToken = refreshToken;
+        await user.save();
+
+
+        // set access and refresh token to cookies...
+        setAuthCookies(res, accessToken, refreshToken);
+
+        const mail_options = {
+            emailTo: user.email,
+            subject: "Login Alert",
+            html: `
+                  <!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333333;">
+  <table style="border-spacing: 0; width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    <!-- Header Section -->
+    ${EMAIL_HEADER_SECTION}
+
+    <!-- Body Content -->
+    <tr>
+      <td style="padding: 20px;">
+        <p style="margin: 0 0 20px;">Hi ${username},</p>
+        <p style="margin: 0 0 20px;">We noticed a login to your WhatSell account</p>
+        <p style="margin: 0 0 20px;">If this was you, no further action is needed. If you didn’t log in, please reset your password immediately or contact our support team.</p>
+      </td>
+    </tr>
+
+    <!-- Footer Section -->
+    ${EMAIL_FOOTER_SECTION}
+
+  </table>
+</body>
+</html>
+            `
+        };
+
+        await sendEmail(mail_options);
+
+        // Respond with success message
+        res.json({ message: "Login successful!" });
+    } catch (error) {
+        res.status(500).json({ message: 'Error logging in', error });
+        console.log("error in login: ", error)
+    }
+};
 
 exports.register = async (req, res) => {
     const { refferal_code, username, password, email, phone } = req.body;
@@ -140,7 +220,7 @@ exports.register = async (req, res) => {
                     <!-- Body Content -->
                     <tr>
                     <td style="padding: 20px;">
-                        <h1 style="margin: 0 0 20px;">Welcome to WhatSell!</h1>
+                        <h1 style="margin: 0 0 20px;">Hi ${username}!</h1>
                         <p style="margin: 0 0 20px;">Thank you for joining WhatSell, where modern e-commerce is redefined. We are thrilled to have you on board. Start exploring our features and find the best deals today!</p>
                         <p style="margin: 0;"><a href="#" style="color: #007BFF; text-decoration: none;">Visit Our Website</a></p>
                     </td>
@@ -288,75 +368,7 @@ exports.registerSeller = async (req, res) => {
 };
 
 
-exports.login = async (req, res) => {
-    const { usernameOrEmailOrPhone, password } = req.body;
-    try {
-        // Find user by either username, email, or phone
-        const user = await User.findOne({
-            $or: [
-                { username: usernameOrEmailOrPhone },
-                { email: usernameOrEmailOrPhone },
-                { phone: usernameOrEmailOrPhone }
-            ]
-        });
 
-        // Check if user exists and password is correct
-        if (!user || !(await user.matchPassword(password))) {
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-
-        // Generate tokens
-        const accessToken = generateAccessToken(user);
-        const refreshToken = generateRefreshToken(user);
-        user.refreshToken = refreshToken;
-        await user.save();
-
-
-        // set access and refresh token to cookies...
-        setAuthCookies(res, accessToken, refreshToken);
-
-        const mail_options = {
-            emailTo: user.email,
-            subject: "Login Alert",
-            html: `
-                  <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333333;">
-  <table style="border-spacing: 0; width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-    <!-- Header Section -->
-    ${EMAIL_HEADER_SECTION}
-
-    <!-- Body Content -->
-    <tr>
-      <td style="padding: 20px;">
-        <h1 style="margin: 0 0 20px;">Welcome to WhatSell!</h1>
-        <p style="margin: 0 0 20px;">Thank you for joining WhatSell, where modern e-commerce is redefined. We are thrilled to have you on board. Start exploring our features and find the best deals today!</p>
-        <p style="margin: 0;"><a href="#" style="color: #007BFF; text-decoration: none;">Visit Our Website</a></p>
-      </td>
-    </tr>
-
-    <!-- Footer Section -->
-    ${EMAIL_FOOTER_SECTION}
-
-  </table>
-</body>
-</html>
-            `
-        };
-
-        await sendEmail(mail_options);
-
-        // Respond with success message
-        res.json({ message: "Login successful!" });
-    } catch (error) {
-        res.status(500).json({ message: 'Error logging in', error });
-        console.log("error in login: ", error)
-    }
-};
 
 
 
