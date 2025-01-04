@@ -74,7 +74,7 @@ app.use('/api', userRoutes);
 // app.use('/api', invoiceRoutes);
 // app.use('/api', notificationRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api', shopRoutes);
+app.use('/api/shops', shopRoutes);
 app.use('/api', categoriesRoutes);
 
 app.use('/uploads',  express.static('uploads'));

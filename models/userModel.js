@@ -103,6 +103,15 @@ const userSchema = new Schema({
       expiry_date: Date,
     },
 
+    email_verification: {
+      token: String,
+      expiry_date: Date,
+      is_verified: {
+        type: Boolean,
+        default: false,
+      },
+    },
+
     shops_visited_previously: [{
       type:mongoose.Schema.Types.ObjectId, ref: 'Shop'
     }],

@@ -113,7 +113,7 @@ exports.changeUserProfileImage = async (req, res) => {
 exports.updateUserProfile = async (req, res) => {
     try {
         const user_id = req.user;
-        const { username, email, phone, location, socials } = req.body;
+        const { username, phone, location, socials } = req.body;
 
         // console.log("username from client: ", username);
         console.log("location from client: ", req.body);
@@ -127,7 +127,7 @@ exports.updateUserProfile = async (req, res) => {
         // console.log("user from b-end: ", user)
         // Update user details
         user.username = username || user.username;
-        user.email = email || user.email;
+        // user.email = email || user.email;
         user.phone = phone || user.phone;
         user.location = location || user.location;
         user.profile.socials = socials || user.profile.socials;

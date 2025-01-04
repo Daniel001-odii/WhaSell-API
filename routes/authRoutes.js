@@ -14,8 +14,13 @@ router.get('/protected', protect, (req, res) => {
     res.json({ message: 'This is a protected route' });
 });
 
+// verification of emails
+router.post('/email_verify', authController.verifyEmail);
+router.post('/email_verification/send', authController.sendVerificationMail);
+
 
 router.post('/password_reset/link', authController.sendPasswordResetLink);
 router.post('/password_reset', authController.resetPassword);
+
 
 module.exports = router;

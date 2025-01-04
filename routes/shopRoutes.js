@@ -6,44 +6,51 @@ const shopController = require("../controllers/shopController");
 
 
 // create new shop....
-router.post("/shops/new", protect, shopController.createNewShop);
+router.post("/new", protect, shopController.createNewShop);
 
 // get shop by id...
-router.get("/shops/:shop_id", shopController.getShopById);
+router.get("/:shop_id", shopController.getShopById);
 
 // get shop by shopname...
-router.get("/shops/:shop_name/full", shopController.getShopByShopname);
+router.get("/:shop_name/full", shopController.getShopByShopname);
 
 // edit shop by shop_id...
-router.patch("/shops/:shop_id/edit", protect, shopController.editShop);
+router.patch("/:shop_id/edit", protect, shopController.editShop);
 
 // follow shop...
-router.post("/shops/:shop_id/follow", protect, shopController.followStore);
+router.post("/:shop_id/follow", protect, shopController.followStore);
 
 // add views to shop...
-router.get("/shops/:shop_id/view", shopController.addViewToStore);
+router.get("/:shop_id/view", shopController.addViewToStore);
 
 // get all shops...
-router.get("/shops/list/all", shopController.getAllShops);
+router.get("/list/all", shopController.getAllShops);
 
 //change shop image...
-router.post("/shops/:shop_id/image", protect, shopController.changeShopImage) 
+router.post("/:shop_id/image", protect, shopController.changeShopImage) 
 
 
 // get shops near user..
-router.get("/shops/near_me/:user_state/all", shopController.getShopsInNearByStates);
+router.get("/near_me/:user_state/all", shopController.getShopsInNearByStates);
 
 // get all boosted shops...
-router.get("/shops/boosted/all", shopController.getBoostedShops);
+router.get("/boosted/all", shopController.getBoostedShops);
 
 
-router.get("/shops/data/analytics", protect, shopController.getShopsAnalytics);
+router.get("/data/analytics", protect, shopController.getShopsAnalytics);
 
 // get glips from followed shops..
-router.get("/shops/followed/all", protect, shopController.getGlipsByFollowedShops);
+router.get("/followed/all", protect, shopController.getGlipsByFollowedShops);
 
 // check existing_shop name..
-router.get("/shops/name_check/:shop_name", shopController.checkExistingShopName);
+router.get("/name_check/:shop_name", shopController.checkExistingShopName);
+
+
+// boost shop...
+router.post("/boost_shop", protect, shopController.boostShop);
+
+// cancel shop boost...
+router.post("/boost_shop/cancel", protect, shopController.cancelShopBoost);
 
 
 module.exports = router;

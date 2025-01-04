@@ -21,6 +21,9 @@ const shopModel = require("../models/shopModel");
 const nearbyStates = require('../utils/statesAndNeighbors.js');
 const glipModel = require("../models/glipModel.js");
 const userModel = require("../models/userModel");
+const cron = require('node-cron');
+const Wallet = require('../models/walletModel'); // Assuming you have a Wallet model
+const BoostedShop = require("../models/boostedShopModel");
 
 // Controller to change shop profile image
 /* exports.changeShopImage = async (req, res) => {
@@ -609,12 +612,162 @@ shops with followers > 10
 */
 exports.getBoostedShops = async (req, res) => {
     try{
+        // const shops = await BoostedShop.find().populate('shop');
         const shops = await shopModel.find({ is_boosted: true });
         res.status(200).json({ shops });
     }catch(error){
         res.status(500).json({ message: "failed to get all boosted shops"})
     }
 }
+
+/* 
+    boost shop
+*/
+exports.boostShop = async (req, res) => {
+    try {
+        const shop_id = req.userModel.shop;
+        const { duration } = req.body;
+        
+        const all_boosted_shops = await BoostedShop.countDocuments();
+        if(all_boosted_shops == 2){
+            return res.status(400).json({ message: "sorry shop boosting slots filled, try again later!" });
+        }
+
+        // Check if the shop exists
+        const shop = await Shop.findById(shop_id);
+        if (!shop) {
+            return res.status(404).json({ message: "Shop not found" });
+        }
+
+        const owner = await User.findById(shop.owner);
+        const wallet = await Wallet.findOne({ user: owner._id });
+
+        // Check if the shop is already boosted
+        const existingBoost = await BoostedShop.findOne({ shop: shop_id });
+        if (existingBoost) {
+            // Remove the boost
+            await BoostedShop.deleteOne({ shop: shop_id });
+            shop.is_boosted = false;
+            await shop.save();
+            console.log('shop boost removed')
+            return res.status(200).json({ message: "Shop boosting cancled boosted" });
+            
+        }
+
+
+        if(wallet.balance < (duration * 10)){
+            return res.status(400).json({ message: "insufficient coins for shop boost"});
+        }
+
+     
+
+
+        if(duration){
+            // Create a new boosted shop entry
+            const boostedShop = new BoostedShop({
+                shop: shop_id,
+                duration: new Date(Date.now() + duration * 24 * 60 * 60 * 1000) // duration in days
+            });
+
+            shop.is_boosted = true;
+            await shop.save();
+
+            await boostedShop.save();
+
+            return res.status(201).json({ message: "Shop boosted successfully", boostedShop });
+        }
+        
+    } catch (error) {
+        res.status(500).json({ message: "Failed to boost shop", error: error.message });
+        console.log("Error boosting shop: ", error);
+    }
+};
+
+/* 
+    cancel shop boost
+*/
+exports.cancelShopBoost = async (req, res) => {
+    try {
+        const shop_id = req.userModel.shop;
+
+        // Check if the shop exists
+        const shop = await Shop.findById(shop_id);
+        if (!shop) {
+            return res.status(404).json({ message: "Shop not found" });
+        }
+
+        // Check if the shop is boosted
+        const boostedShop = await BoostedShop.findOne({ shop: shop_id });
+        if (!boostedShop) {
+            return res.status(400).json({ message: "Shop is not boosted" });
+        }
+
+        // Remove the boost
+        await BoostedShop.deleteOne({ shop: shop_id });
+        shop.is_boosted = false;
+        await shop.save();
+
+        res.status(200).json({ message: "Shop boost canceled successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to cancel shop boost", error: error.message });
+        console.log("Error canceling shop boost: ", error);
+    }
+};
+
+// no_of_days
+// shop_name
+// Schedule a cron job to run every day at midnight
+
+
+
+
+/* 
+    THIS CRON JOB BELOW IS TO AUTO DEDUCT CREDITS FROM BOOSTED SHOP OWNERS WALLET
+    EVERYDAY AT MIDNIGHT
+    COIN DEDUCTION AMOUNT IS 10 CREDITS
+*/
+//14 SECS CRON JOB
+cron.schedule('*/30 * * * * *', async () => {
+// cron.schedule('0 0 * * *', async () => {
+    try {
+        const boostedShops = await BoostedShop.find();
+
+        for (const boostedShop of boostedShops) {
+            const shop = await Shop.findById(boostedShop.shop);
+            const owner = await User.findById(shop.owner);
+            const wallet = await Wallet.findOne({ user: owner._id });
+
+            if (wallet && wallet.balance >= 10) {
+                wallet.balance -= 10;
+                // add to transactions..
+                const today = new Date();
+                wallet.debit_transactions.push({
+                  date: today,
+                  coin_amount: 10,
+                  narration: 'debit for shop boosting'
+                });
+
+                await wallet.save();
+                console.log(`Deducted 10 credits from ${owner.username}'s wallet for shop ${shop.name}`);
+            } else {
+                console.log(`Insufficient balance for ${owner.username}'s wallet`);
+                // Optionally, you can disable the boost if the balance is insufficient
+                shop.is_boosted = false;
+                await shop.save();
+            }
+
+            // Check if the boost duration has expired
+            if (new Date() >= boostedShop.duration) {
+                shop.is_boosted = false;
+                await shop.save();
+                await BoostedShop.deleteOne({ _id: boostedShop._id });
+                console.log(`Boost period ended for shop ${shop.name}`);
+            }
+        }
+    } catch (error) {
+        console.error('Error running cron job:', error);
+    }
+});
 
 
 

@@ -4,6 +4,9 @@ const Shop = require('../models/shopModel');
 const sendEmail = require('../utils/sendEmail');
 const walletModel = require('../models/walletModel');
 const userModel = require('../models/userModel');
+const { EMAIL_FOOTER_SECTION, EMAIL_HEADER_SECTION } = require('../utils/emailTemplates');
+const crypto = require('crypto');
+
 
 const generateAccessToken = (user) => {
     return jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30d' });
@@ -29,7 +32,7 @@ const setAuthCookies = (res, access_token, refresh_token) => {
 
 };
 
-const { EMAIL_FOOTER_SECTION, EMAIL_HEADER_SECTION } = require('../utils/emailTemplates');
+
 
 
 
@@ -158,6 +161,10 @@ exports.login = async (req, res) => {
         // Check if user exists and password is correct
         if (!user || !(await user.matchPassword(password))) {
             return res.status(401).json({ message: 'Invalid credentials provided' });
+        }
+
+        if(user && user.email_verification.is_verified != true){
+            return res.status(400).json({ message: "email not verified" });
         }
         
         const username = user.username;
@@ -500,7 +507,7 @@ exports.sendPasswordResetLink = async (req, res) => {
         // send rest email here...
         const mail_options = {
             emailTo: user.email,
-            subject: "Login Alert",
+            subject: "Password Reset Request",
             html: `
                   <!DOCTYPE html>
                     <html>
@@ -601,8 +608,114 @@ exports.resetPassword = async (req, res) => {
 
         await sendEmail(mail_options);
 
+        res.status(200).json({ message: "password reset successfully" });
+
     }catch(error){
         res.status(500).json({ message: "error resetting password"});
         console.log("error resetting password: ", error);
     }
-}
+};
+
+
+
+exports.verifyEmail = async (req, res) => {
+    try{
+        const { token } = req.body;
+        const user = await userModel.findOne({ 
+            'email_verification.token': token,
+            'email_verification.expiry_date': { $gt: new Date() } 
+        });
+
+        // Check if either user or employer exists
+        if (!user) {
+            return res.status(400).json({ message: 'This link has expired' });
+        }
+
+    
+        if(user && user.email_verification.is_verified){
+            return res.status(200).json({ success: true, message: "Email already verified, please login"})
+        }
+
+        user.email_verification.is_verified = true;
+        await user.save();
+        return res.status(201).json({ success: true, message: "Email verified successfully, please login"})
+      
+    }catch(error){
+        res.status(500).json({ success: false, message: "internal server error"});
+        console.log("error verifying email: ", error);
+    }
+};
+
+exports.sendVerificationMail = async (req, res) => {
+   const { email } = req.body;
+
+    try {
+        // Find the user by their email address
+        const user = await userModel.findOne({ email });
+
+        // // Check if either user or employer exists
+        if (!user) {
+            return res.status(404).json({ message: 'no user record found with email' });
+        }
+
+        // Generate a unique token (6-digit random number)
+        const email_verification_token = crypto.randomBytes(4).toString('hex');
+
+        // Set an expiration time for the reset token (e.g., 1 hour)
+        const email_verification_code_expiry = Date.now() + 3600000; // 1 hour
+
+
+        const username = user.username; 
+
+        // Update the found document's fields with the reset token and expiration time
+        user.email_verification.token = email_verification_token;
+        user.email_verification.expiry_date = email_verification_code_expiry;
+
+        await user.save();
+
+        // SEND EMAIL HERE >>>>
+        const mail_options = {
+            emailTo: user.email,
+            subject: "Verify Your Email",
+            html: `
+                  <!DOCTYPE html>
+                    <html>
+                    <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    </head>
+                    <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333333;">
+                    <table style="border-spacing: 0; width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                        <!-- Header Section -->
+                        ${EMAIL_HEADER_SECTION}
+
+                        <!-- Body Content -->
+                        <tr>
+                            <td style="padding: 20px;">
+                                <p style="">Hi ${username},</p>
+                                <p style="">Thank you for registering with WhatSell. Please verify your email address by clicking the link below:</p>
+                                <p style="text-align: left; margin: 20px 0;">
+                                    <a href="${process.env.APP_URL}/login?token=${email_verification_token}"  style="background-color: #47C67F; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a>
+                                </p>
+                                <p style="margin: 0 0 20px;">If you did not request this, please ignore this email.</p>
+                            </td>
+                        </tr>
+
+                        <!-- Footer Section -->
+                        ${EMAIL_FOOTER_SECTION}
+
+                    </table>
+                    </body>
+                    </html>
+            `
+        };
+
+        await sendEmail(mail_options);
+
+        res.status(200).json({ message: 'verification email sent successfully' });
+
+    } catch (error) {
+        console.error('Error sending password reset verification email :', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
