@@ -57,7 +57,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const productRoutes = require("./routes/productRoutes");
 const shopRoutes = require("./routes/shopRoutes");
 const userRoutes = require("./routes/userRoutes");
-
+const waitlistRoutes = require("./routes/waitlistRoutes");
 
 
 // Serve static files from the 'public' directory
@@ -75,6 +75,7 @@ app.use('/api', categoriesRoutes);
 app.use('/uploads',  express.static('uploads'));
 app.use('/product-images',  express.static('product-images'));
 // app.use('/api', userRoutes);
+app.use('/api', waitlistRoutes);
 
 app.get('/', function(req, res){
   return res.send("whatsell API is live...")
