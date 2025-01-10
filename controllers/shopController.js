@@ -489,6 +489,7 @@ exports.getShopsAnalytics = async (req, res) => {
 exports.getShopsInNearByStates = async (req, res) => {
     try {
         const user_state = req.params.user_state.split(" ")[0];
+        // const user_state = "Abia";
 
         console.log("from client: ", user_state);
 
@@ -535,7 +536,12 @@ exports.getShopsInNearByStates = async (req, res) => {
         };
 
         // Await the result from getShopsInNearbyStates function
-        const shops_near_me = await getShopsInNearbyStates();
+        let shops_near_me = await getShopsInNearbyStates();
+
+        if(shops_near_me.length == 0 || '' || null){
+            const alt = await shopModel.find()
+            shops_near_me = alt
+        }
 
         console.log("Shops near you: ", shops_near_me);
 
