@@ -367,7 +367,7 @@ exports.updateStoreAvailability = async (req, res) => {
 // GET ALL SHOPS...
 exports.getAllShops = async (req, res) => {
     try{
-        const shops = await Shop.find();
+        const shops = await Shop.find().populate("owner");
         res.status(200).json({ shops });
     }catch(error){
         res.status(500).json({ success: false, message: "internal server error"});
@@ -562,7 +562,7 @@ exports.getGlipsByFollowedShops = async (req, res) => {
 
         const followed_shops = await shopModel.find({ _id: { $in: user.followed_shops }});
         
-        const glips = await glipModel.find({ shop: { $in: user.followed_shops }});
+        const glips = await glipModel.find({ shop: { $in: user.followed_shops }}).populate("shop name");
 
         res.status(200).json({ glips, followed_shops });
        
@@ -570,7 +570,22 @@ exports.getGlipsByFollowedShops = async (req, res) => {
     }catch(error){
         res.status(500).json({ message: "error getting glips from followed shops"});
     }
-}
+};
+
+
+
+exports.getAllGlips = async (req, res) => {
+    try {
+        const glips = await glipModel.find().populate("shop name");
+        res.status(200).json({ glips });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to get all glips", error: error.message });
+        console.log("Error getting all glips: ", error);
+    }
+};
+
+
+
 
 
 /* 

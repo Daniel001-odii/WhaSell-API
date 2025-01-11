@@ -38,6 +38,9 @@ router.post('/:product_id/like', protect, productController.addProductToLikes);
 
 // edit product...
 router.put('/:product_id/edit', protect, productController.editProduct);
+
+// search products...
+router.get('/search/product', productController.searchProducts);
 /* 
 **
     GLIPS...

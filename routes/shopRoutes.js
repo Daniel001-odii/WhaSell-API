@@ -42,6 +42,9 @@ router.get("/data/analytics", protect, shopController.getShopsAnalytics);
 // get glips from followed shops..
 router.get("/followed/all", protect, shopController.getGlipsByFollowedShops);
 
+// get all glips
+router.get("/glips/all", shopController.getAllGlips);
+
 // check existing_shop name..
 router.get("/name_check/:shop_name", shopController.checkExistingShopName);
 

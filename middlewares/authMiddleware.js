@@ -24,7 +24,7 @@ const protect = async (req, res, next) => {
     const token = req.cookies.accessToken;
     const refreshToken = req.cookies.refreshToken;
     if(!refreshToken){
-        return res.status(500).json({ message: 'unauthorized' });
+        return res.status(401).json({ message: 'unauthorized' });
     }
     if (!token) {
         return res.status(401).json({ message: 'No token, authorization denied' });

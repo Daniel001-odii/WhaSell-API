@@ -120,6 +120,41 @@ exports.deleteUpload = async (req, res) => {
 // Update
 // Delete
 
+// Controller to search products based on keywords
+exports.searchProducts = async (req, res) => {
+  try {
+    const keyword = req.query.keyword;
+
+    if (!keyword) {
+      return res.status(400).json({ message: "Keyword is required for searching" });
+    }
+
+    const searchRegex = new RegExp(keyword, 'i'); // Case-insensitive search
+
+    const alternate_products = await Product.find();
+
+    const products = await Product.find({
+      $or: [
+        { name: searchRegex },
+        { description: searchRegex },
+        { condition: searchRegex }
+      ]
+    });
+
+   /*  if(products.length > 0){
+      return res.status(200).json({ products });
+    } else {
+      return res.status(201).json({ alternate_products });
+    } */
+
+    res.status(200).json({ products, alternate_products });
+   
+  } catch (error) {
+    console.log("Error searching products:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 // controller to get all products from...
 exports.getAllProducts = async (req, res) => {
     try{
