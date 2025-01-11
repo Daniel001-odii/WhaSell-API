@@ -304,22 +304,34 @@ const addWatermark = async (filePath, full_text) => {
 };
 
 
-// get products by shop id..
+// get products by shop id with pagination..
 exports.getProductsByShopId = async (req, res) => {
-    try{
-        const shop_id = req.params.shop_id;
-        const shop = await Shop.findById(shop_id);
-        if(!shop){
-            res.status(404).json({ message: "shop not found"});
-        }
-
-        const products = await Product.find({ shop: shop_id })
-        res.status(200).json({ products });
-
-    }catch(error){
-        res.status(500).json({ message: 'internal server error'});
-        console.log("error getting products by shop id: ", error);
+  try {
+    const shop_id = req.params.shop_id;
+    const shop = await Shop.findById(shop_id);
+    if (!shop) {
+      return res.status(404).json({ message: "shop not found" });
     }
+
+    const { page = 1, limit = 5 } = req.query; // Default to page 1 and limit 10
+
+    const products = await Product.find({ shop: shop_id })
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    const totalProducts = await Product.countDocuments({ shop: shop_id });
+
+    res.status(200).json({
+      products,
+      totalPages: Math.ceil(totalProducts / limit),
+      currentPage: parseInt(page),
+      totalProducts,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: 'internal server error' });
+    console.log("error getting products by shop id: ", error);
+  }
 }
 
 
@@ -378,12 +390,12 @@ exports.addProductToLikes = async (req, res) => {
       // If already liked, remove the product from liked_products
       user.liked_products = user.liked_products.filter(id => id.toString() !== product_id.toString());
       await user.save();
-      return res.status(200).json({ message: "Product removed from liked products" });
+      return res.status(200).json({ is_liked: false, message: "Product removed from liked products" });
     } else {
       // If not liked, add the product to liked_products
       user.liked_products.push(product_id);
       await user.save();
-      return res.status(201).json({ message: "Product added to liked products" });
+      return res.status(201).json({ is_liked: true, message: "Product added to liked products" });
     }
 
   } catch (error) {
@@ -392,6 +404,34 @@ exports.addProductToLikes = async (req, res) => {
   }
 };
 
+
+/* 
+  edit a product
+*/
+exports.editProduct = async (req, res) => {
+  try {
+    const product_id = req.params.product_id;
+    const updates = req.body;
+
+    const product = await Product.findById(product_id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Update the product with the new data
+    Object.keys(updates).forEach(key => {
+      product[key] = updates[key];
+    });
+
+    await product.save();
+
+    res.status(200).json({ message: "Product updated successfully", product });
+  } catch (error) {
+    console.log("Error updating product:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 
 

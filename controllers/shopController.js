@@ -635,7 +635,7 @@ exports.boostShop = async (req, res) => {
         const { duration } = req.body;
         
         const all_boosted_shops = await BoostedShop.countDocuments();
-        if(all_boosted_shops == 2){
+        if(all_boosted_shops == 4){
             return res.status(400).json({ message: "sorry shop boosting slots filled, try again later!" });
         }
 
