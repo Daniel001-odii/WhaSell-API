@@ -279,7 +279,8 @@ exports.newProduct = async (req, res) => {
           return res.status(400).json({ message: "insufficient coin balance, please purchase more coins!"})
       } */
       
-      const upload_fee = 2
+      // DEBIT COINS CREDITS FOR PRODUCT UPLOAD...
+      const upload_fee = 0
       const wallet_balance = user_balance - upload_fee;
       wallet.balance = wallet_balance;
 
@@ -469,5 +470,47 @@ exports.editProduct = async (req, res) => {
 };
 
 
+
+// get product by category..
+
+exports.getProductsByCategory = async (req, res) => {
+  try {
+      const { categoryName } = req.params;
+
+      // Check if the categoryName is provided
+      if (!categoryName) {
+          return res.status(400).json({
+              success: false,
+              message: "Category name is required"
+          });
+      }
+
+      // Fetch all products that match the category name
+      const products = await Product.find({ category: categoryName });
+
+      // Check if products exist for the category
+      if (products.length === 0) {
+          return res.status(404).json({
+              success: false,
+              message: `No products found for category: ${categoryName}`
+          });
+      }
+
+      // Get the first image of the first product
+      const headerImage = products[0]?.images?.[0] || null;
+
+      res.status(200).json({
+          success: true,
+          header_image: headerImage,
+          data: products
+      });
+  } catch (error) {
+      console.error("Error fetching products by category:", error);
+      res.status(500).json({
+          success: false,
+          message: "Internal Server Error"
+      });
+  }
+};
 
 // Get similar items.. if not get every other items...

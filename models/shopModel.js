@@ -77,6 +77,11 @@ const shopSchema = new Schema({
         },
     
    
+    is_verified: {
+        type: Boolean,
+        default: false,
+    },
+
     is_boosted: {
         type: Boolean,
         default: false,

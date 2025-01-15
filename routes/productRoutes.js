@@ -41,6 +41,9 @@ router.put('/:product_id/edit', protect, productController.editProduct);
 
 // search products...
 router.get('/search/product', productController.searchProducts);
+
+// get products by category name
+router.get('/products_by_category/:categoryName', productController.getProductsByCategory);
 /* 
 **
     GLIPS...
