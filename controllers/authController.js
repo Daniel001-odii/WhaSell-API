@@ -249,37 +249,59 @@ exports.register = async (req, res) => {
         // save tokens to cookies
         setAuthCookies(res, accessToken, refreshToken);
 
-        const mail_options = {
-            emailTo: email,
-            subject: "Yes you did it, welcome onboard!",
-            html: `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                </head>
-                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333333;">
-                <table style="border-spacing: 0; width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-                <!-- Header Section -->
-                    ${EMAIL_HEADER_SECTION}
+           // Generate a unique token (6-digit random number)
+           const email_verification_token = crypto.randomBytes(4).toString('hex');
 
-                    <!-- Body Content -->
-                    <tr>
-                    <td style="padding: 20px;">
-                        <h1 style="margin: 0 0 20px;">Welcome to WhatSell!</h1>
-                        <p style="margin: 0 0 20px;">Thank you for joining WhatSell, where modern e-commerce is redefined. We are thrilled to have you on board. Start exploring our features and find the best deals today!</p>
-                        <p style="margin: 0;"><a href="#" style="color: #007BFF; text-decoration: none;">Visit Our Website</a></p>
-                    </td>
-                    </tr>
-
-                    <!-- Footer Section -->
-                    ${EMAIL_FOOTER_SECTION}
-                </table>
-                </body>
-                </html>
-            `
-        };
+           // Set an expiration time for the reset token (e.g., 1 hour)
+           const email_verification_code_expiry = Date.now() + 3600000; // 1 hour
+   
+   
+           const username = user.username; 
+   
+           // Update the found document's fields with the reset token and expiration time
+           user.email_verification.token = email_verification_token;
+           user.email_verification.expiry_date = email_verification_code_expiry;
+   
+           await user.save();
+   
+           // SEND EMAIL HERE >>>>
+           const mail_options = {
+               emailTo: user.email,
+               subject: "Verify Your Email",
+               html: `
+                     <!DOCTYPE html>
+                       <html>
+                       <head>
+                       <meta charset="UTF-8">
+                       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                       </head>
+                       <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333333;">
+                       <table style="border-spacing: 0; width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                           <!-- Header Section -->
+                           ${EMAIL_HEADER_SECTION}
+   
+                           <!-- Body Content -->
+                           <tr>
+                               <td style="padding: 20px;">
+                                   <p style="">Hi ${username},</p>
+                                   <h1 style="margin: 0 0 20px;">Welcome to WhatSell!</h1>
+                                   <p style="margin: 0 0 20px;">Thank you for joining WhatSell, where modern e-commerce is redefined. We are thrilled to have you on board. Start exploring our features and find the best deals today!</p>
+                                   <p style="">Thank you for registering with WhatSell. Please verify your email address by clicking the link below:</p>
+                                   <p style="text-align: left; margin: 20px 0;">
+                                       <a href="${process.env.APP_URL}/login?token=${email_verification_token}"  style="background-color: #47C67F; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a>
+                                   </p>
+                                   <p style="margin: 0 0 20px;">If you did not request this, please ignore this email.</p>
+                               </td>
+                           </tr>
+   
+                           <!-- Footer Section -->
+                           ${EMAIL_FOOTER_SECTION}
+   
+                       </table>
+                       </body>
+                       </html>
+               `
+           };
 
         await sendEmail(mail_options);
 
@@ -305,6 +327,7 @@ exports.register = async (req, res) => {
 exports.registerSeller = async (req, res) => {
     const { refferal_code, username, password, email, phone, shop_name, shop_category, shop_description } = req.body;
     console.log("refferal code: ", refferal_code);
+    console.log("from client: ", req.body);
     try {
         const user = new User({ 
             email, 
@@ -329,6 +352,8 @@ exports.registerSeller = async (req, res) => {
             owner: user._id,
         });
 
+        user.shop = shop._id;
+
         // shop.profile.location = user.profile.location;
         await shop.save();
 
@@ -349,47 +374,68 @@ exports.registerSeller = async (req, res) => {
         const refreshToken = generateRefreshToken(user);
 
         user.refreshToken = refreshToken;
-        await user.save();
+      
 
         // save tokens to cookies
         setAuthCookies(res, accessToken, refreshToken);
 
 
         
+        // Generate a unique token (6-digit random number)
+        const email_verification_token = crypto.randomBytes(4).toString('hex');
+
+        // Set an expiration time for the reset token (e.g., 1 hour)
+        const email_verification_code_expiry = Date.now() + 3600000; // 1 hour
+
+
+        // const username = username; 
+
+        // Update the found document's fields with the reset token and expiration time
+        user.email_verification.token = email_verification_token;
+        user.email_verification.expiry_date = email_verification_code_expiry;
+
+        await user.save();
+
+        // SEND EMAIL HERE >>>>
         const mail_options = {
-            emailTo: email,
-            subject: "WELCOME TO WHATSELL! 🎉",
+            emailTo: user.email,
+            subject: "Verify Your Email",
             html: `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                </head>
-                <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333333;">
-                <table style="border-spacing: 0; width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-                <!-- Header Section -->
-                    ${EMAIL_HEADER_SECTION}
+                  <!DOCTYPE html>
+                    <html>
+                    <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    </head>
+                    <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333333;">
+                    <table style="border-spacing: 0; width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                        <!-- Header Section -->
+                        ${EMAIL_HEADER_SECTION}
 
-                    <!-- Body Content -->
-                    <tr>
-                    <td style="padding: 20px;">
-                        <h1 style="margin: 0 0 20px;">Welcome to WhatSell!</h1>
-                        <p style="margin: 0 0 20px;">Thank you for joining WhatSell, where modern e-commerce is redefined. We are thrilled to have you on board. Start exploring our features and find the best deals today!</p>
-                        <p style="margin: 0;"><a href="#" style="color: #007BFF; text-decoration: none;">Visit Our Website</a></p>
-                    </td>
-                    </tr>
+                        <!-- Body Content -->
+                        <tr>
+                            <td style="padding: 20px;">
+                                <p style="">Hi ${username},</p>
+                                <h1 style="margin: 0 0 20px;">Welcome to WhatSell!</h1>
+                                <p style="margin: 0 0 20px;">Thank you for joining WhatSell, where modern e-commerce is redefined. We are thrilled to have you on board. Start exploring our features and find the best deals today!</p>
+                                <p style="">Thank you for registering with WhatSell. Please verify your email address by clicking the link below:</p>
+                                <p style="text-align: left; margin: 20px 0;">
+                                    <a href="${process.env.APP_URL}/login?token=${email_verification_token}"  style="background-color: #47C67F; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a>
+                                </p>
+                                <p style="margin: 0 0 20px;">If you did not request this, please ignore this email.</p>
+                            </td>
+                        </tr>
 
-                    <!-- Footer Section -->
-                    ${EMAIL_FOOTER_SECTION}
-                </table>
-                </body>
-                </html>
+                        <!-- Footer Section -->
+                        ${EMAIL_FOOTER_SECTION}
+
+                    </table>
+                    </body>
+                    </html>
             `
         };
 
         await sendEmail(mail_options);
-
         /* 
             award refferal bonus to user...
         */
@@ -476,6 +522,7 @@ exports.logout = async (req, res) => {
         res.status(500).json({ message: 'Error logging out', error });
     }
 };
+
 
 
 /* 
@@ -693,6 +740,8 @@ exports.sendVerificationMail = async (req, res) => {
                         <tr>
                             <td style="padding: 20px;">
                                 <p style="">Hi ${username},</p>
+                                <h1 style="margin: 0 0 20px;">Welcome to WhatSell!</h1>
+                                <p style="margin: 0 0 20px;">Thank you for joining WhatSell, where modern e-commerce is redefined. We are thrilled to have you on board. Start exploring our features and find the best deals today!</p>
                                 <p style="">Thank you for registering with WhatSell. Please verify your email address by clicking the link below:</p>
                                 <p style="text-align: left; margin: 20px 0;">
                                     <a href="${process.env.APP_URL}/login?token=${email_verification_token}"  style="background-color: #47C67F; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a>
