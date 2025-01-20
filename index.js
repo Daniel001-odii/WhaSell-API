@@ -19,6 +19,7 @@ const corsOptions = {
     'https://wha-sell.vercel.app',
     'https://whatsell-waitlist.vercel.app',
     'https://whatsell.com.ng', 
+    'https://www.whatsell.store', 
     'https://whatsell.store', 
     'https://whasell.onrender.com'],// Specify your frontend URL
   credentials: true // Enable credentials
