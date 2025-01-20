@@ -250,7 +250,8 @@ exports.newProduct = async (req, res) => {
       const user = await User.findById(user_id).populate();
 
       const { name, description, category, images, condition, price, charge_for_delivery, price_negotiable, delivery_fee } = req.body;
-      console.log('client: ', req.body);
+      // console.log('client: ', req.body);
+      console.log("user trying upload: ", user);
 
 
       const new_product = new Product({
@@ -263,7 +264,7 @@ exports.newProduct = async (req, res) => {
           charge_for_delivery,
           price_negotiable,
           delivery_fee,
-          shop: user.shop,
+          shop: user.shop._id,
       });
 
       
