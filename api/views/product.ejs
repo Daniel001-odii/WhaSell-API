@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= product.name %></title>
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="<%= product.description %>">
+    <meta property="og:title" content="<%= product.name %>">
+    <meta property="og:description" content="<%= product.description %>">
+    <meta property="og:image" content="<%= product.images[0] %>">
+    <!-- Add your CSS files here -->
+    <link rel="stylesheet" href="/path/to/your/styles.css">
+    <style>
+        /* Custom CSS */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            text-align: center;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .bg-app_green {
+            background-color: #4CAF50; /* Nice shade of green */
+        }
+
+        .text-app_green {
+            color: #4CAF50;
+        }
+
+        .bg-app_light_green {
+            background-color: #E8F5E9; /* Light green background */
+        }
+
+        .text-green-700 {
+            color: #2E7D32; /* Darker green for text */
+        }
+
+        .bg-slate-100 {
+            background-color: #F3F4F6; /* Light gray background */
+        }
+
+        .text-white {
+            color: #FFFFFF;
+        }
+
+        .text-gray-400 {
+            color: #9CA3AF;
+        }
+
+        .text-orange-600 {
+            color: #EA580C; /* Orange for condition text */
+        }
+
+        .bg-orange-100 {
+            background-color: #FFEDD5; /* Light orange background */
+        }
+
+        .bg-blue-100 {
+            background-color: #DBEAFE; /* Light blue background */
+        }
+
+        .text-blue-600 {
+            color: #2563EB; /* Blue for text */
+        }
+
+        .bg-blue-600 {
+            background-color: #2563EB; /* Blue for background */
+        }
+
+        .rounded-lg {
+            border-radius: 0.5rem;
+        }
+
+        .rounded-xl {
+            border-radius: 1rem;
+        }
+
+        .rounded-full {
+            border-radius: 9999px;
+        }
+
+        .shadow-sm {
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .flex-col {
+            flex-direction: column;
+        }
+
+        .flex-row {
+            flex-direction: row;
+        }
+
+        .justify-center {
+            justify-content: center;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .gap-3 {
+            gap: 0.75rem;
+        }
+
+        .gap-5 {
+            gap: 1.25rem;
+        }
+
+        .gap-8 {
+            gap: 2rem;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        .w-fit {
+            width: fit-content;
+        }
+
+        .h-full {
+            height: 100%;
+        }
+
+        .h-64 {
+            height: 16rem;
+        }
+
+        .h-28 {
+            height: 7rem;
+        }
+
+        .h-10 {
+            height: 2.5rem;
+        }
+
+        .h-8 {
+            height: 2rem;
+        }
+
+        .h-[400px] {
+            height: 400px;
+        }
+
+        .max-h-[250px] {
+            max-height: 250px;
+        }
+
+        .overflow-y-auto {
+            overflow-y: auto;
+        }
+
+        .overflow-x-auto {
+            overflow-x: auto;
+        }
+
+        .overflow-hidden {
+            overflow: hidden;
+        }
+
+        .p-3 {
+            padding: 0.75rem;
+        }
+
+        .px-3 {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+
+        .py-1 {
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+        }
+
+        .py-2 {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .py-6 {
+            padding-top: 1.5rem;
+            padding-bottom: 1.5rem;
+        }
+
+        .px-6 {
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+
+        .px-8 {
+            padding-left: 2rem;
+            padding-right: 2rem;
+        }
+
+        .px-10 {
+            padding-left: 2.5rem;
+            padding-right: 2.5rem;
+        }
+
+        .mt-2 {
+            margin-top: 0.5rem;
+        }
+
+        .mt-3 {
+            margin-top: 0.75rem;
+        }
+
+        .mt-5 {
+            margin-top: 1.25rem;
+        }
+
+        .mt-8 {
+            margin-top: 2rem;
+        }
+
+        .text-sm {
+            font-size: 0.875rem;
+        }
+
+        .text-md {
+            font-size: 1rem;
+        }
+
+        .text-lg {
+            font-size: 1.125rem;
+        }
+
+        .text-xl {
+            font-size: 1.25rem;
+        }
+
+        .text-2xl {
+            font-size: 1.5rem;
+        }
+
+        .text-3xl {
+            font-size: 1.875rem;
+        }
+
+        .font-bold {
+            font-weight: 700;
+        }
+
+        .font-semibold {
+            font-weight: 600;
+        }
+
+        .border {
+            border-width: 1px;
+        }
+
+        .border-4 {
+            border-width: 4px;
+        }
+
+        .border-gray-300 {
+            border-color: #D1D5DB;
+        }
+
+        .border-app_green {
+            border-color: #4CAF50;
+        }
+
+        .object-cover {
+            object-fit: cover;
+        }
+
+        .cursor-pointer {
+            cursor: pointer;
+        }
+
+        .full-image {
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .skeleton {
+            background-color: #E5E7EB;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- PRODUCT DETAIL DIALOG -->
+    <div id="product-detail-dialog" style="display: none;">
+        <div>
+            <h2>Product Description</h2>
+            <div><%- product.description %></div>
+        </div>
+    </div>
+
+    <!-- FULL PAGE MODAL FOR PURCHASE -->
+    <div id="full-page-modal" style="display: none;">
+        <h2 class="font-bold text-xl">Proceed to purchase</h2>
+        <p>Before you proceed, make sure you carefully read and follow these helpful tips to ensure the safety of yourself and your goods!</p>
+        <div class="flex flex-col justify-center items-center overflow-y-auto">
+            <div class="max-h-[250px]">
+                <!-- SAFETY TIPS -->
+                <div class="mt-5 flex flex-col justify-center items-center gap-8 px-10 py-6 bg-blue-100 text-blue-600 w-fit mx-auto my-0 rounded-xl">
+                    <div class="bg-blue-600 text-white p-3 rounded-md font-bold w-fit">
+                        <i class="bi bi-shield-check"></i>
+                        Safety Tips
+                    </div>
+                    <div class="flex flex-col text-left w-full">
+                        <ol class="list-decimal text-left text-sm" start="1">
+                            <li>Avoid paying in advance, even if it's delivery</li>
+                            <li>Meet the seller at a safe public place</li>
+                            <li>Inspect the item and ensure it’s exactly what you ordered</li>
+                            <li>Make sure that the packed item is what you’ve inspected</li>
+                            <li>Only pay if you’re satisfied!</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex flex-row justify-between gap-3 w-full">
+            <button onclick="toggleModal('full-page-modal')" class="btn bg-slate-100">Cancel</button>
+            <a href="https://wa.me/<%= shop.owner.phone %>?text=<%= wa_message_text %>">
+                <button class="btn bg-app_green text-white">Buy Now</button>
+            </a>
+        </div>
+    </div>
+
+    <!-- UNAUTHORIZED ACTION MODAL -->
+    <div id="unauthorized-action-modal" style="display: none;">
+        <div class="flex flex-col gap-3">
+            <p class="text-gray-400">my guy!</p>
+            <span class="text-2xl">You need to be logged in to perform that action :)</span>
+        </div>
+        <div class="flex flex-row gap-3 w-full">
+            <button onclick="toggleModal('unauthorized-action-modal')" class="btn p-3 px-6 bg-gray-200 rounded-md w-full mt-3">cancel</button>
+            <a href="/login" class="w-full">
+                <button class="btn p-3 px-6 bg-app_green text-white rounded-md w-full mt-3">Login</button>
+            </a>
+        </div>
+    </div>
+
+    <!-- PRODUCT DETAILS -->
+    <div class="">
+        <!-- ERROR GETTING PRODUCT DETAILS -->
+        <% if (error_getting_product) { %>
+            <div class="h-64 items-center flex flex-col justify-center text-gray-400 text-2xl">
+                <img src="/assets/images/Match not found.png"/>
+                <p>we couldn't find the requested product</p>
+            </div>
+        <% } %>
+
+        <!-- PAGE LOADING SKELETON -->
+        <% if (loading) { %>
+            <div class="m-3">
+                <div class="skeleton" style="width: 100%; border-radius: 20px; height: 120px;"></div>
+                <div class="flex flex-col md:flex-row gap-5 mt-8 flex-wrap">
+                    <div class="flex flex-col gap-3 justify-center items-start">
+                        <div class="skeleton" style="width: 350px; border-radius: 10px; height: 250px;"></div>
+                        <div class="flex flex-row gap-3 mt-3">
+                            <div class="skeleton" style="width: 100px; border-radius: 10px; height: 80px;"></div>
+                            <div class="skeleton" style="width: 100px; border-radius: 10px; height: 80px;"></div>
+                            <div class="skeleton" style="width: 100px; border-radius: 10px; height: 80px;"></div>
+                        </div>
+                    </div>
+                    <div class="w-full md:w-[50%] flex flex-col gap-3">
+                        <div class="skeleton" style="width: 100%; border-radius: 10px; height: 40px;"></div>
+                        <div class="skeleton" style="width: 30%; border-radius: 10px; height: 40px;"></div>
+                        <div class="skeleton" style="width: 45%; border-radius: 10px; height: 45px;"></div>
+                        <div class="skeleton" style="width: 40%; border-radius: 10px; height: 35px;"></div>
+                        <div class="skeleton" style="width: 100%; border-radius: 10px; height: 25px;"></div>
+                        <div class="skeleton" style="width: 100%; border-radius: 10px; height: 60px;"></div>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+
+        <!-- PRODUCT DETAILS -->
+        <% if (!loading && product) { %>
+            <div class="flex md:flex-col flex-col-reverse">
+                <!-- SHOP DETAIL BANNER -->
+                <% if (shop) { %>
+                    <div class="mt-3 border rounded-lg p-3 flex flex-row items-start justify-between gap-5 flex-wrap shadow-sm">
+                        <div class="flex flex-row gap-3 md:w-fit w-full">
+                            <div class="min-w-28 w-full md:!w-[200px] h-28 relative rounded-xl border border-gray-300 overflow-hidden">
+                                <img src="<%= shop.profile.image_url %>" alt="shop Photo" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex flex-col" v-if="shop.followers">
+                                <a href="/shops/<%= shop.name %>">
+                                    <span class="text-xl font-bold"><%= shop.name %></span>
+                                </a>
+                                <span class="text-md"><%= shop.category %></span>
+                                <span class="text-sm">Joined <%= formatDistanceToNow(shop.createdAt) %> ago | <%= shop.followers.length %> followers</span>
+                            </div>
+                        </div>
+                        <!-- ACTION BUTTONS -->
+                        <% if (!isAllowed()) { %>
+                            <div class="hidden md:flex flex-row gap-3 flex-wrap border-red-30 items-center justify-center">
+                                <button onclick="followShop('<%= shop._id %>')" class="text-sm border hover:border-gray-300 hover:bg-slate-100 rounded-full p-3 px-8 text-black font-medium">
+                                    <% if (!shop.followers.includes(user)) { %>
+                                        <i class="bi bi-plus mr-1"></i>follow
+                                    <% } else { %>
+                                        following
+                                    <% } %>
+                                </button>
+                                <button class="rounded-full h-10 w-10 hover:bg-slate-100 text-xl">
+                                    <i class="bi bi-telephone-fill"></i>
+                                </button>
+                                <button class="rounded-full h-10 w-10 hover:bg-slate-100 text-2xl">
+                                    <i class="bi bi-whatsapp"></i>
+                                </button>
+                            </div>
+                        <% } %>
+                    </div>
+                <% } %>
+
+                <!-- FULL PRODUCT DESCRIPTION AND DETAILS -->
+                <div class="flex flex-col md:flex-row gap-5 mt-8 flex-wra relative">
+                    <div class="flex flex-row gap-4 absolute right-5 text-xl">
+                        <button onclick="addProductToLikes('<%= product._id %>')" class="h-8 w-8 rounded-full bg-white flex justify-center items-center border <%= checkLikes(product._id) ? 'border-green-500' : '' %>">
+                            <% if (checkLikes(product._id)) { %>
+                                <i class="bi bi-hand-thumbs-up-fill text-green-500"></i>
+                            <% } else { %>
+                                <i class="bi bi-hand-thumbs-up"></i>
+                            <% } %>
+                        </button>
+                        <button class="h-8 w-8 rounded-full bg-white flex justify-center items-center border text-sm" p-3><i class="bi bi-share"></i></button>
+                    </div>
+                    <div class="flex flex-col gap-3 md:w-[50%]">
+                        <div style="background-image: url('<%= main_image %>'); background-size: contain;" class="full-image w-full h-[400px] rounded-md flex justify-center items-center bg-gray-100"></div>
+                        <div class="flex flex-row gap-3 items-center overflow-x-auto">
+                            <% product.images.forEach(image => { %>
+                                <div onclick="viewImage('<%= image %>')" class="bg-gray-100 overflow-hidden p-1 <%= main_image == image ? 'border-4 border-app_green' : '' %> rounded-lg cursor-pointer">
+                                    <img src="<%= image %>" class="rounded-md size-16 cursor-pointer">
+                                </div>
+                            <% }) %>
+                        </div>
+                    </div>
+                    <div class="flex flex-col md:w-[50%]">
+                        <span class="bg-app_light_green px-3 py-1 text-green-700 text-2xl font-semibold w-fit"><%= product.name %></span>
+                        <span class="px-3 py-2 mt-2 text-orange-600 bg-orange-100 w-fit rounded-md text-sm">
+                            <i class="bi bi-stars"></i>
+                            <%= product.condition %>
+                        </span>
+                        <span class="text-3xl font-bold mt-3">NGN <%= product.price.toLocaleString() %></span>
+                        <div class="flex flex-col gap-2 mt-5">
+                            <div class="flex flex-row justify-between">
+                                <p class="font-bold text-xl">Product Description</p>
+                                <button onclick="toggleModal('product-detail-dialog')">
+                                    <i class="bi bi-arrows-fullscreen"></i>
+                                </button>
+                            </div>
+                            <div><%- product.description.substring(0, 500) %></div>
+                            <div class="flex flex-col gap-3 flew-wrap text-sm text-gray-400">
+                                <span><i class="bi bi-tag mr-1"></i><%= product.category %></span>
+                                <% if (shop_location) { %>
+                                    <span><i class="bi bi-geo-alt mr-1"></i><%= shop_location.address %>, <%= shop_location.state %></span>
+                                <% } %>
+                                <span><i class="bi bi-eye mr-1"></i><%= product.views %> views</span>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="bg-app_green hover:bg-opacity-90 text-white w-full rounded-lg p-3 text-lg font-semibold" onclick="toggleModal('full-page-modal')">Buy now</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Add your JavaScript files
+      <!-- Add your JavaScript files here -->
+      <script src="/path/to/your/scripts.js"></script>
+      <script>
+          // JavaScript functions
+          function toggleModal(modalId) {
+              const modal = document.getElementById(modalId);
+              modal.style.display = modal.style.display === 'none' ? 'block' : 'none';
+          }
+  
+          function viewImage(imageUrl) {
+              document.querySelector('.full-image').style.backgroundImage = `url('${imageUrl}')`;
+          }
+  
+          async function followShop(shopId) {
+              try {
+                  const response = await fetch(`/api/shops/${shopId}/follow`, { method: 'POST' });
+                  const data = await response.json();
+                  alert(data.message);
+                  location.reload(); // Reload the page to reflect changes
+              } catch (error) {
+                  console.error('Error following shop:', error);
+                  alert('An error occurred while trying to follow the shop.');
+              }
+          }
+  
+          async function addProductToLikes(productId) {
+              try {
+                  const response = await fetch(`/api/products/${productId}/like`, { method: 'POST' });
+                  const data = await response.json();
+                  alert(data.message);
+                  location.reload(); // Reload the page to reflect changes
+              } catch (error) {
+                  console.error('Error liking product:', error);
+                  alert('An error occurred while trying to like the product.');
+              }
+          }
+  
+          function checkLikes(productId) {
+              // Implement your logic to check if the product is liked by the user
+              return false; // Placeholder
+          }
+  
+          function isAllowed() {
+              // Implement your logic to check if the user is allowed to perform actions
+              return false; // Placeholder
+          }
+      </script>
+
+</body>
+</html>

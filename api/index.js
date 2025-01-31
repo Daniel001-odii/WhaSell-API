@@ -67,6 +67,7 @@ const userRoutes = require("./routes/userRoutes");
 const waitlistRoutes = require("./routes/waitlistRoutes");
 
 
+
 // Serve static files from the 'public' directory
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
@@ -94,6 +95,65 @@ app.engine('handlebars', exphbs.engine());
 app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'templates', 'emails'));
 
+
+// trying server side rendering...
+const Shop = require('./models/shopModel');
+const Product = require('./models/productModel');
+const { formatDistanceToNow } = require('date-fns');
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+
+// Define the isAllowed function
+function isAllowed(user, shop) {
+  if (!user || !shop || !shop.owner) {
+      return false;
+  }
+  return user._id === shop.owner._id;
+}
+
+
+function checkLikes(productId) {
+  // Implement your logic to check if the product is liked by the user
+  return false; // Placeholder
+}
+
+app.get('/product/:id', async (req, res) => {
+  try {
+      const product = await Product.findById(req.params.id).exec();
+      if (!product) {
+          return res.status(404).render('product', {
+              error_getting_product: true,
+              loading: false,
+          });
+      }
+
+      const shop = await Shop.findById(product.shop).exec();
+      const user = req.user; // Assuming you have user authentication
+
+      res.render('product', {
+          product: product,
+          shop: {
+              ...shop.toObject(),
+              createdAt: new Date(shop.createdAt), // Ensure createdAt is a Date object
+          },
+          user: user,
+          shop_location: shop.owner.location,
+          error_getting_product: false,
+          loading: false,
+          main_image: product.images[0],
+          wa_message_text: `Hello, I am interested in this product: ${req.protocol}://${req.get('host')}${req.originalUrl}`,
+          formatDistanceToNow: formatDistanceToNow, // Pass the function to the template
+          isAllowed: isAllowed, // Pass the isAllowed function to the template
+          checkLikes: checkLikes, // Pass the checkLikes function to the template
+      });
+  } catch (error) {
+      console.error('Error fetching product:', error);
+      res.status(500).render('product', {
+          error_getting_product: true,
+          loading: false,
+      });
+  }
+});
 
 //setup server to listen on port declared on env
 app.listen(process.env.PORT || 8000, () => {
