@@ -2,8 +2,10 @@
   "name": "whasell-api",
   "version": "1.0.0",
   "description": "api backend for the whasell project",
-  "main": "index.js",
+  "main": "api/index.js",
   "scripts": {
+    "start": "node api/index.js",
+    "dev": "vercel dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "dannie",
