@@ -3,27 +3,27 @@
 // READ
 // UPDATE
 // DELETE CONTROLLERs HERE
-const Shop = require("../models/shopModel");
-const Invoice = require("../models/invoiceModel")
-const Product = require("../models/productModel");
-const User = require("../models/userModel");
-const Notification = require("../models/notificationModel")
+const Shop = require("../models/shopModel.js");
+const Invoice = require("../models/invoiceModel.js")
+const Product = require("../models/productModel.js");
+const User = require("../models/userModel.js");
+const Notification = require("../models/notificationModel.js")
 
-const { shopImageUpload } = require("../utils/uploadConfig");
+const { shopImageUpload } = require("../utils/uploadConfig.js");
 
-const { initializeFormidable } = require('../config/formidable.config');
-const { uploadShopProfileImage } = require('../utils/firebaseFileUpload');
+const { initializeFormidable } = require('../config/formidable.config.js');
+const { uploadShopProfileImage } = require('../utils/firebaseFileUpload.js');
 
 
-const getFullUrl = require('../utils/getFullPath');
-const shopModel = require("../models/shopModel");
+const getFullUrl = require('../utils/getFullPath.js');
+const shopModel = require("../models/shopModel.js");
 
 const nearbyStates = require('../utils/statesAndNeighbors.js');
 const glipModel = require("../models/glipModel.js");
-const userModel = require("../models/userModel");
+const userModel = require("../models/userModel.js");
 const cron = require('node-cron');
-const Wallet = require('../models/walletModel'); // Assuming you have a Wallet model
-const BoostedShop = require("../models/boostedShopModel");
+const Wallet = require('../models/walletModel.js'); // Assuming you have a Wallet model
+const BoostedShop = require("../models/boostedShopModel.js");
 
 // Controller to change shop profile image
 /* exports.changeShopImage = async (req, res) => {
