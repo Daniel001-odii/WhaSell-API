@@ -59,7 +59,8 @@ router.get('/glips/:shop_id/all', productController.getGlipsByShopId);
 // upload new glip video
 router.post('/glips/new', protect, checkcoins, productController.newGlipVideo);
 
-
+// get similar products...
+router.get('/similar/all', productController.getSimilarProducts);
 
 
 module.exports = router;

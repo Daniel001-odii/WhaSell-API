@@ -515,3 +515,32 @@ exports.getProductsByCategory = async (req, res) => {
 };
 
 // Get similar items.. if not get every other items...
+exports.getSimilarProducts = async (req, res) => {
+  try {
+    const { keyword } = req.query;
+
+    if (!keyword) {
+      return res.status(400).json({ message: "Keyword is required for searching similar products" });
+    }
+
+    const searchRegex = new RegExp(keyword, 'i'); // Case-insensitive search
+
+    const similarProducts = await Product.find({
+      $or: [
+        { name: searchRegex },
+        { description: searchRegex },
+        { condition: searchRegex }
+      ]
+    });
+
+    if (similarProducts.length > 0) {
+      return res.status(200).json({ products: similarProducts });
+    } else {
+      const recentProducts = await Product.find().sort({ createdAt: -1 }).limit(10);
+      return res.status(200).json({ products: recentProducts });
+    }
+  } catch (error) {
+    console.log("Error getting similar products:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
