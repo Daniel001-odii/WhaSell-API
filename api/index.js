@@ -16,6 +16,8 @@ app.use(cookieParser());
 const corsOptions = {
   origin: [
     'http://localhost:8080', 
+    'http://localhost:3000', 
+    'https://whatsell-nuxt.vercel.app',
     'https://wha-sell.vercel.app',
     'https://whatsell-waitlist.vercel.app',
     'https://whatsell.com.ng', 
