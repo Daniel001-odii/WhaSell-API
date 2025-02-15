@@ -183,7 +183,7 @@ exports.getProductById = async (req, res) => {
           viewedProducts = JSON.parse(viewedProducts);
       }
 
-      const product = await Product.findById(product_id);
+      const product = await Product.findById(product_id).populate("shop");
 
       // Increment product views only if the product is not in the viewedProducts array
       if (!viewedProducts.includes(product_id)) {
