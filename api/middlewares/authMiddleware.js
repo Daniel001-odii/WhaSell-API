@@ -21,11 +21,7 @@ const USER_FROM_DB = require("../models/userModel");
 
 // auth middleware for tokens in cookies...
 const protect = async (req, res, next) => {
-    const token = req.cookies.accessToken;
-    const refreshToken = req.cookies.refreshToken;
-    if(!refreshToken){
-        return res.status(401).json({ message: 'unauthorized' });
-    }
+    const token = req.header('Authorization')?.split(' ')[1];
     if (!token) {
         return res.status(401).json({ message: 'No token, authorization denied' });
     }

@@ -150,6 +150,9 @@ const addRefferalBonus = async (refferal_code, username) => {
 exports.login = async (req, res) => {
     const { emailOrPhone, password } = req.body;
     try {
+        if(!emailOrPhone || !password){
+            return res.status(400).json({ message: "all fields are required!"});
+        }
         // Find user by either username, email, or phone
         const user = await User.findOne({
             $or: [
@@ -177,7 +180,7 @@ exports.login = async (req, res) => {
 
 
         // set access and refresh token to cookies...
-        setAuthCookies(res, accessToken, refreshToken);
+        // setAuthCookies(res, accessToken, refreshToken);
 
         const mail_options = {
             emailTo: user.email,
@@ -215,7 +218,11 @@ exports.login = async (req, res) => {
         await sendEmail(mail_options);
 
         // Respond with success message
-        res.json({ message: "Login successful!" });
+        res.json({ 
+            message: "Login successful!",  
+            accessToken,
+            refreshToken, 
+        });
     } catch (error) {
         res.status(500).json({ message: 'Error logging in', error });
         console.log("error in login: ", error)
