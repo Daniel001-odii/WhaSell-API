@@ -23,4 +23,6 @@ router.post('/password_reset/link', authController.sendPasswordResetLink);
 router.post('/password_reset', authController.resetPassword);
 
 
+// upload shop image on register
+router.post('/shop_register/image', authController.uploadShopImage);
 module.exports = router;

@@ -1,41 +1,43 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/userModel');
-const Shop = require('../models/shopModel');
-const sendEmail = require('../utils/sendEmail');
-const walletModel = require('../models/walletModel');
-const userModel = require('../models/userModel');
-const { EMAIL_FOOTER_SECTION, EMAIL_HEADER_SECTION } = require('../utils/emailTemplates');
-const crypto = require('crypto');
-
+const jwt = require("jsonwebtoken");
+const User = require("../models/userModel");
+const Shop = require("../models/shopModel");
+const sendEmail = require("../utils/sendEmail");
+const walletModel = require("../models/walletModel");
+const userModel = require("../models/userModel");
+const {
+  EMAIL_FOOTER_SECTION,
+  EMAIL_HEADER_SECTION,
+} = require("../utils/emailTemplates");
+const crypto = require("crypto");
 
 const generateAccessToken = (user) => {
-    return jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30d' });
+  return jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: "30d",
+  });
 };
-
 
 const generateRefreshToken = (user) => {
-    return jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '30d' });
+  return jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN_SECRET, {
+    expiresIn: "30d",
+  });
 };
-
 
 // res.cookie('accessToken', accessToken, { httpOnly: false, maxAge: 15 * 60 * 1000 });
 // res.cookie('refreshToken', refreshToken, { httpOnly: false, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
 const setAuthCookies = (res, access_token, refresh_token) => {
-    res.setHeader('Set-Cookie', [
-        `accessToken=${access_token}; HttpOnly; Secure; SameSite=none; Max-Age=${7 * 24 * 60 * 60}`,
-        `refreshToken=${refresh_token}; HttpOnly; Secure; SameSite=none; Max-Age=${30 * 24 * 60 * 60 * 1000}`
-    ]);
+  res.setHeader("Set-Cookie", [
+    `accessToken=${access_token}; HttpOnly; Secure; SameSite=none; Max-Age=${
+      7 * 24 * 60 * 60
+    }`,
+    `refreshToken=${refresh_token}; HttpOnly; Secure; SameSite=none; Max-Age=${
+      30 * 24 * 60 * 60 * 1000
+    }`,
+  ]);
 
-    // res.cookie('accessToken', access_token, { httpOnly: true, maxAge: 15 * 60 * 1000 });
-    // res.cookie('refreshToken', refresh_token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
-
+  // res.cookie('accessToken', access_token, { httpOnly: true, maxAge: 15 * 60 * 1000 });
+  // res.cookie('refreshToken', refresh_token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
 };
-
-
-
-
-
 
 /* const EMAIL_HEADER_SECTION = `
     <tr>
@@ -76,39 +78,35 @@ const EMAIL_FOOTER_SECTION = `
 `;
  */
 const addRefferalBonus = async (refferal_code, username) => {
-    try{
-        const refferal_bonus = 10;
-        const refferal_user = await User.findOne({ refferal_code });
-        const wallet = await walletModel.findOne({ user: refferal_user._id });
+  try {
+    const refferal_bonus = 10;
+    const refferal_user = await User.findOne({ refferal_code });
+    const wallet = await walletModel.findOne({ user: refferal_user._id });
 
-        console.log("found owner wallet: ", wallet);
-        
-        const email = refferal_user.email;
+    console.log("found owner wallet: ", wallet);
 
-        if(refferal_user){
-            wallet.balance = Number(wallet.balance) + Number(refferal_bonus);
-            wallet.transactions.push(
-                {
-                    status: 'successful',
-                    amount: refferal_bonus,
-                    date: new Date(),
-                    narration: 'Refferal Bonus',
-                }
-            );
-            await wallet.save();
+    const email = refferal_user.email;
 
-            const referralMailOptions = {
-                emailTo: email,
-                
-                
-            };
+    if (refferal_user) {
+      wallet.balance = Number(wallet.balance) + Number(refferal_bonus);
+      wallet.transactions.push({
+        status: "successful",
+        amount: refferal_bonus,
+        date: new Date(),
+        narration: "Refferal Bonus",
+      });
+      await wallet.save();
 
-            await sendEmail(referralMailOptions);
-            // send email to refferal user...
-            const mail_options = {
-                emailTo: email,
-                subject: "You've Earned a Referral Bonus! 🎈",
-                html: `
+      const referralMailOptions = {
+        emailTo: email,
+      };
+
+      await sendEmail(referralMailOptions);
+      // send email to refferal user...
+      const mail_options = {
+        emailTo: email,
+        subject: "You've Earned a Referral Bonus! 🎈",
+        html: `
                     <!DOCTYPE html>
                     <html>
                     <head>
@@ -135,57 +133,51 @@ const addRefferalBonus = async (refferal_code, username) => {
                     </table>
                     </body>
                     </html>
-                `
-            };
+                `,
+      };
 
-        await sendEmail(mail_options);
+      await sendEmail(mail_options);
     }
-    }catch(error){
-        throw error
-    }
-    
+  } catch (error) {
+    throw error;
+  }
 };
 
-
 exports.login = async (req, res) => {
-    const { emailOrPhone, password } = req.body;
-    try {
-        if(!emailOrPhone || !password){
-            return res.status(400).json({ message: "all fields are required!"});
-        }
-        // Find user by either username, email, or phone
-        const user = await User.findOne({
-            $or: [
-                { email: emailOrPhone },
-                { phone: emailOrPhone }
-            ]
-        });
+  const { emailOrPhone, password } = req.body;
+  try {
+    if (!emailOrPhone || !password) {
+      return res.status(400).json({ message: "all fields are required!" });
+    }
+    // Find user by either username, email, or phone
+    const user = await User.findOne({
+      $or: [{ email: emailOrPhone }, { phone: emailOrPhone }],
+    });
 
-        // Check if user exists and password is correct
-        if (!user || !(await user.matchPassword(password))) {
-            return res.status(401).json({ message: 'Invalid credentials provided' });
-        }
+    // Check if user exists and password is correct
+    if (!user || !(await user.matchPassword(password))) {
+      return res.status(401).json({ message: "Invalid credentials provided" });
+    }
 
-        if(user && user.email_verification.is_verified != true){
-            return res.status(400).json({ message: "email not verified" });
-        }
-        
-        const username = user.username;
+    if (user && user.email_verification.is_verified != true) {
+      return res.status(400).json({ message: "email not verified" });
+    }
 
-        // Generate tokens
-        const accessToken = generateAccessToken(user);
-        const refreshToken = generateRefreshToken(user);
-        user.refreshToken = refreshToken;
-        await user.save();
+    const username = user.username;
 
+    // Generate tokens
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+    user.refreshToken = refreshToken;
+    await user.save();
 
-        // set access and refresh token to cookies...
-        // setAuthCookies(res, accessToken, refreshToken);
+    // set access and refresh token to cookies...
+    // setAuthCookies(res, accessToken, refreshToken);
 
-        const mail_options = {
-            emailTo: user.email,
-            subject: "Login Alert",
-            html: `
+    const mail_options = {
+      emailTo: user.email,
+      subject: "Login Alert",
+      html: `
                   <!DOCTYPE html>
 <html>
 <head>
@@ -212,68 +204,74 @@ exports.login = async (req, res) => {
   </table>
 </body>
 </html>
-            `
-        };
+            `,
+    };
 
-        await sendEmail(mail_options);
+    await sendEmail(mail_options);
 
-        // Respond with success message
-        res.json({ 
-            message: "Login successful!",  
-            accessToken,
-            refreshToken, 
-        });
-    } catch (error) {
-        res.status(500).json({ message: 'Error logging in', error });
-        console.log("error in login: ", error)
-    }
+    // Respond with success message
+    res.json({
+      message: "Login successful!",
+      accessToken,
+      refreshToken,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error logging in", error });
+    console.log("error in login: ", error);
+  }
 };
 
 exports.register = async (req, res) => {
-    try {
-        const { refferal_code, username, password, email, phone } = req.body;
+  try {
+    const { refferal_code, username, password, email, phone } = req.body;
 
-        if(!username || !password || !email || !phone){
-            return res.status(400).json({ message: "all fields are required!", fields: "all"});
-        }
-        const existingUserEmail = await User.findOne({ email })
-        if(existingUserEmail){
-            return res.status(400).json({ message: "email already registered!", fields: "email"});
-        }
+    if (!username || !password || !email || !phone) {
+      return res
+        .status(400)
+        .json({ message: "all fields are required!", fields: "all" });
+    }
+    const existingUserEmail = await User.findOne({ email });
+    if (existingUserEmail) {
+      return res
+        .status(400)
+        .json({ message: "email already registered!", fields: "email" });
+    }
 
-        const existingPhone = await User.findOne({ phone })
-        if(existingPhone){
-            return res.status(400).json({ message: "phone already registered!", fields: "phone"});
-        }
+    const existingPhone = await User.findOne({ phone });
+    if (existingPhone) {
+      return res
+        .status(400)
+        .json({ message: "phone already registered!", fields: "phone" });
+    }
 
-        const user = new User({ email, username, password, phone });
+    const user = new User({ email, username, password, phone });
 
-        // generate auth tokens and save to cookies to sign-in ...
-        const accessToken = generateAccessToken(user);
-        const refreshToken = generateRefreshToken(user);
-        user.refreshToken = refreshToken;
-        await user.save();
+    // generate auth tokens and save to cookies to sign-in ...
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+    user.refreshToken = refreshToken;
+    await user.save();
 
-        // save tokens to cookies
-        // setAuthCookies(res, accessToken, refreshToken);
+    // save tokens to cookies
+    // setAuthCookies(res, accessToken, refreshToken);
 
-        // Generate a unique token (6-digit random number)
-        const email_verification_token = crypto.randomBytes(4).toString('hex');
+    // Generate a unique token (6-digit random number)
+    const email_verification_token = crypto.randomBytes(4).toString("hex");
 
-        // Set an expiration time for the reset token (e.g., 1 hour)
-        const email_verification_code_expiry = Date.now() + 3600000; // 1 hour
+    // Set an expiration time for the reset token (e.g., 1 hour)
+    const email_verification_code_expiry = Date.now() + 3600000; // 1 hour
 
-        // Update the found document's fields with the reset token and expiration time
-        user.email_verification.token = email_verification_token;
-        user.email_verification.expiry_date = email_verification_code_expiry;
+    // Update the found document's fields with the reset token and expiration time
+    user.email_verification.token = email_verification_token;
+    user.email_verification.expiry_date = email_verification_code_expiry;
 
-           await user.save();
-   
-           // SEND EMAIL HERE >>>>
-           const mail_options = {
-               emailTo: user.email,
-               subject: "Verify Your Email",
-               html: `
+    await user.save();
+
+    // SEND EMAIL HERE >>>>
+    const mail_options = {
+      emailTo: user.email,
+      subject: "Verify Your Email",
+      html: `
                      <!DOCTYPE html>
                        <html>
                        <head>
@@ -305,107 +303,108 @@ exports.register = async (req, res) => {
                        </table>
                        </body>
                        </html>
-               `
-           };
+               `,
+    };
 
-        await sendEmail(mail_options);
+    await sendEmail(mail_options);
 
-        /* 
+    /* 
             award refferal bonus to user...
         */
-         if(refferal_code){
-            /* 
+    if (refferal_code) {
+      /* 
                 util function to award refferal bonus to user...
             */
-           await addRefferalBonus(refferal_code, username);
-         }
-
-
-        res.status(201).json({ message: 'User registered and logged-in successfully', accessToken, refreshToken });
-
-    } catch (error) {
-        console.log("error registering user: ", error);
-        res.status(500).json({ message: 'Error registering user', error });
+      await addRefferalBonus(refferal_code, username);
     }
+
+    res
+      .status(201)
+      .json({
+        message: "User registered and logged-in successfully",
+        accessToken,
+        refreshToken,
+      });
+  } catch (error) {
+    console.log("error registering user: ", error);
+    res.status(500).json({ message: "Error registering user", error });
+  }
 };
 
 exports.registerSeller = async (req, res) => {
-    const { refferal_code, username, password, email, phone, shop_name, shop_category, shop_description } = req.body;
-    console.log("refferal code: ", refferal_code);
-    console.log("from client: ", req.body);
-    try {
-        const user = new User({ 
-            email, 
-            username, 
-            password, 
-            phone,
-            account_type: 'seller', 
-        });
+  const {
+    refferal_code,
+    username,
+    password,
+    email,
+    phone,
+    shop_name,
+    shop_category,
+    shop_description,
+    image,
+  } = req.body;
+  console.log("refferal code: ", refferal_code);
+  console.log("from client: ", req.body);
+  try {
+    const user = new User({
+      email,
+      username,
+      password,
+      phone,
+      account_type: "seller",
+    });
 
-        
+    const exisitingShopName = await Shop.findOne({ name: shop_name });
+    if (exisitingShopName) {
+      return res.status(400).json({ message: "sorry shop name already exist" });
+    }
 
-        const exisitingShopName = await Shop.findOne({ name: shop_name });
-        if(exisitingShopName){
-            return res.status(400).json({ message: "sorry shop name already exist" });
-        }
+    // auto create new shop for user...
+    const shop = new Shop({
+      name: shop_name,
+      description: shop_description,
+      category: shop_category,
+      owner: user._id,
+      profile: {
+        image_url: image ? image : "",
+      }
+    });
 
-        // auto create new shop for user...
-        const shop = new Shop({
-            name: shop_name,
-            description: shop_description,
-            category: shop_category,
-            owner: user._id,
-        });
+    user.shop = shop._id;
 
-        user.shop = shop._id;
+    // shop.profile.location = user.profile.location;
+    await shop.save();
 
-        // shop.profile.location = user.profile.location;
-        await shop.save();
+    // check if phone is already registered...
+    const phoneAvailable = await User.findOne({ phone });
 
-        // check if phone is already registered...
-        const phoneAvailable = await User.findOne({ phone });
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
-        /*
-        if(phoneAvailable){
-            return res.status(400).json({ message: "sorry this number is already registered!"})
-        }
-            */
+    user.refreshToken = refreshToken;
 
-        // await user.save();
+    // save tokens to cookies
+    // setAuthCookies(res, accessToken, refreshToken);
 
-        // generate auth tokens and save to cookies to sign-in ...
+    // Generate a unique token (6-digit random number)
+    const email_verification_token = crypto.randomBytes(4).toString("hex");
 
-        const accessToken = generateAccessToken(user);
-        const refreshToken = generateRefreshToken(user);
+    // Set an expiration time for the reset token (e.g., 1 hour)
+    const email_verification_code_expiry = Date.now() + 3600000; // 1 hour
 
-        user.refreshToken = refreshToken;
-      
+    // const username = username;
 
-        // save tokens to cookies
-        setAuthCookies(res, accessToken, refreshToken);
+    // Update the found document's fields with the reset token and expiration time
+    user.email_verification.token = email_verification_token;
+    user.email_verification.expiry_date = email_verification_code_expiry;
 
+    await user.save();
 
-        
-        // Generate a unique token (6-digit random number)
-        const email_verification_token = crypto.randomBytes(4).toString('hex');
-
-        // Set an expiration time for the reset token (e.g., 1 hour)
-        const email_verification_code_expiry = Date.now() + 3600000; // 1 hour
-
-
-        // const username = username; 
-
-        // Update the found document's fields with the reset token and expiration time
-        user.email_verification.token = email_verification_token;
-        user.email_verification.expiry_date = email_verification_code_expiry;
-
-        await user.save();
-
-        // SEND EMAIL HERE >>>>
-        const mail_options = {
-            emailTo: user.email,
-            subject: "Verify Your Email",
-            html: `
+    // SEND EMAIL HERE >>>>
+    const mail_options = {
+      emailTo: user.email,
+      subject: "Verify Your Email",
+      html: `
                   <!DOCTYPE html>
                     <html>
                     <head>
@@ -437,130 +436,129 @@ exports.registerSeller = async (req, res) => {
                     </table>
                     </body>
                     </html>
-            `
-        };
+            `,
+    };
 
-        await sendEmail(mail_options);
-        /* 
+    await sendEmail(mail_options);
+    /* 
             award refferal bonus to user...
         */
-      
 
-       if(refferal_code){
-        /* 
+    if (refferal_code) {
+      /* 
             util function to award refferal bonus to user...
         */
-            await addRefferalBonus(refferal_code, username);
-
-       }
-       
-
-
-
-        res.status(201).json({ message: 'User registered and logged-in successfully' });
-
-    } catch (error) {
-        console.log("error registering user: ", error);
-        res.status(500).json({ message: 'Error registering user', error });
+      await addRefferalBonus(refferal_code, username);
     }
+
+    res
+      .status(201)
+      .json({ message: "User registered and logged-in successfully", accessToken, refreshToken });
+  } catch (error) {
+    console.log("error registering user: ", error);
+    res.status(500).json({ message: "Error registering user", error });
+  }
 };
 
-
-
-
-
-
 exports.token = async (req, res) => {
-    const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) {
-        return res.status(403).json({ message: 'Refresh token required' });
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) {
+    return res.status(403).json({ message: "Refresh token required" });
+  }
+  try {
+    const user = await User.findOne({ refreshToken });
+    if (!user) {
+      return res.status(403).json({ message: "Invalid refresh token" });
     }
-    try {
-        const user = await User.findOne({ refreshToken });
-        if (!user) {
-            return res.status(403).json({ message: 'Invalid refresh token' });
+    jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET,
+      (err, decoded) => {
+        if (err) {
+          return res.status(403).json({ message: "Invalid refresh token" });
         }
-        jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
-            if (err) {
-                return res.status(403).json({ message: 'Invalid refresh token' });
-            }
-            const accessToken = generateAccessToken(user);
+        const accessToken = generateAccessToken(user);
 
-            // set access..
-            res.cookie('accessToken', accessToken, { 
-                httpOnly: true, 
-                secure: true, 
-                sameSite: 'none',
-                maxAge: 15 * 60 * 1000 
-            });
-            res.status(200).json({ message: 'your session has been restored', accessToken });
+        // set access..
+        res.cookie("accessToken", accessToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          maxAge: 15 * 60 * 1000,
         });
-    } catch (error) {
-        res.status(500).json({ message: 'Error refreshing token', error });
-    }
+        res
+          .status(200)
+          .json({ message: "your session has been restored", accessToken });
+      }
+    );
+  } catch (error) {
+    res.status(500).json({ message: "Error refreshing token", error });
+  }
 };
 
 exports.checkCurrentUser = async (req, res) => {
-    try{
-        
-    }catch(error){
-        res.status(500).json({ message: "internal server error"});
-    }
-}
-
-
-exports.logout = async (req, res) => {
-    const refreshToken = req.cookies.refreshToken;
-    try {
-        const user = await User.findOne({ refreshToken });
-        if (user) {
-            user.refreshToken = null;
-            await user.save();
-        }
-        res.setHeader('Set-Cookie', [
-            `accessToken=; HttpOnly; Secure; SameSite=none; Max-Age=0`,
-            `refreshToken=; HttpOnly; Secure; SameSite=none; Max-Age=0`
-        ]);
-
-        res.json({ message: 'Logged out successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error logging out', error });
-    }
+  try {
+  } catch (error) {
+    res.status(500).json({ message: "internal server error" });
+  }
 };
 
+exports.logout = async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  try {
+    const user = await User.findOne({ refreshToken });
+    if (user) {
+      user.refreshToken = null;
+      await user.save();
+    }
+    res.setHeader("Set-Cookie", [
+      `accessToken=; HttpOnly; Secure; SameSite=none; Max-Age=0`,
+      `refreshToken=; HttpOnly; Secure; SameSite=none; Max-Age=0`,
+    ]);
 
+    res.json({ message: "Logged out successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error logging out", error });
+  }
+};
 
 /* 
     send password reset link
 */
 exports.sendPasswordResetLink = async (req, res) => {
-    try{
-        const { email } = req.body;
-        const user = await userModel.findOne({ email });
+  try {
+    const { email } = req.body;
+    const user = await userModel.findOne({ email });
 
-        if(!user){
-            return res.status(404).json({ message: "Password reset link will be sent if your email matches our record"});
-        };
+    if (!user) {
+      return res
+        .status(404)
+        .json({
+          message:
+            "Password reset link will be sent if your email matches our record",
+        });
+    }
 
-        // Set an expiration time for the reset token (e.g., 1 hour)
-        const username = user.username;
-        const expiry_date = Date.now() + 3600000; // 1 hour
-        const token = `${Math.random().toString(36).substring(0, 10)}`;
-        const pass_reset = {
-            token,
-            expiry_date
-        };
+    // Set an expiration time for the reset token (e.g., 1 hour)
+    const username = user.username;
+    const expiry_date = Date.now() + 3600000; // 1 hour
+    const token = `${Math.random().toString(36).substring(0, 10)}`;
+    const pass_reset = {
+      token,
+      expiry_date,
+    };
 
-        user.pass_reset = pass_reset;
-        await user.save();
+    user.pass_reset = pass_reset;
+    await user.save();
 
-        const reset_link = `${process.env.APP_URL}/password_reset?token=${token}`;
+    // const reset_link = `${process.env.APP_URL}/password_reset?token=${token}`;
+    const reset_link = `${process.env.APP_URL}/forgot_password?token=${token}`;
 
-        // send rest email here...
-        const mail_options = {
-            emailTo: user.email,
-            subject: "Password Reset Request",
-            html: `
+    // send rest email here...
+    const mail_options = {
+      emailTo: user.email,
+      subject: "Password Reset Request",
+      html: `
                   <!DOCTYPE html>
                     <html>
                         <head>
@@ -591,45 +589,46 @@ exports.sendPasswordResetLink = async (req, res) => {
                         </table>
                         </body>
                     </html>
-            `
-        };
+            `,
+    };
 
-        await sendEmail(mail_options);
+    await sendEmail(mail_options);
 
-        res.status(200).json({ message: "Password reset link sent successfully!"})
-
-
-    }catch(error){
-        res.status(500).json({ message: "error sending password reset link"});
-        console.log("error sending password reset link: ", error);
-    }
+    res.status(200).json({ message: "Password reset link sent successfully!" });
+  } catch (error) {
+    res.status(500).json({ message: "error sending password reset link" });
+    console.log("error sending password reset link: ", error);
+  }
 };
 
-
 exports.resetPassword = async (req, res) => {
-    try{
-        const { token, password } = req.body;
-        const user = await userModel.findOne({ 
-            'pass_reset.token': token,
-            'pass_reset.expiry_date': { $gt: new Date() } 
-        });
+  try {
+    const { token, password } = req.body;
+    const user = await userModel.findOne({
+      "pass_reset.token": token,
+      "pass_reset.expiry_date": { $gt: new Date() },
+    });
 
-        if(!user){
-            return res.status(401).json({ message: "invalid reset token provided"});
-        }
-        
-        user.pass_reset = {
-            token: null,
-            expiry_date: null
-        };
-        user.password = password;
-        await user.save();
+    if (!user) {
+      return res.status(401).json({ message: "invalid reset token provided" });
+    }
 
-        // send email reset success mail..
-        const mail_options = {
-            emailTo: user.email,
-            subject: "Password Reset Successful",
-            html: `
+    user.pass_reset = {
+      token: null,
+      expiry_date: null,
+    };
+    user.password = password;
+    await user.save();
+
+    // generate necesasry tokens..
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    // send email reset success mail..
+    const mail_options = {
+      emailTo: user.email,
+      subject: "Password Reset Successful",
+      html: `
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -655,81 +654,93 @@ exports.resetPassword = async (req, res) => {
                 </table>
                 </body>
                 </html>
-            `
-        };
+            `,
+    };
 
-        await sendEmail(mail_options);
+    await sendEmail(mail_options);
 
-        res.status(200).json({ message: "password reset successfully" });
-
-    }catch(error){
-        res.status(500).json({ message: "error resetting password"});
-        console.log("error resetting password: ", error);
-    }
+    res
+      .status(200)
+      .json({
+        message: "password reset successfully",
+        accessToken,
+        refreshToken,
+      });
+  } catch (error) {
+    res.status(500).json({ message: "error resetting password" });
+    console.log("error resetting password: ", error);
+  }
 };
 
-
-
 exports.verifyEmail = async (req, res) => {
-    try{
-        const { token } = req.body;
-        const user = await userModel.findOne({ 
-            'email_verification.token': token,
-            'email_verification.expiry_date': { $gt: new Date() } 
-        });
+  try {
+    const { token } = req.body;
+    const user = await userModel.findOne({
+      "email_verification.token": token,
+      "email_verification.expiry_date": { $gt: new Date() },
+    });
 
-        // Check if either user or employer exists
-        if (!user) {
-            return res.status(400).json({ message: 'This link has expired' });
-        }
-
-    
-        if(user && user.email_verification.is_verified){
-            return res.status(200).json({ success: true, message: "Email already verified, please login"})
-        }
-
-        user.email_verification.is_verified = true;
-        await user.save();
-        return res.status(201).json({ success: true, message: "Email verified successfully, please login"})
-      
-    }catch(error){
-        res.status(500).json({ success: false, message: "internal server error"});
-        console.log("error verifying email: ", error);
+    // Check if either user or employer exists
+    if (!user) {
+      return res.status(400).json({ message: "This link has expired" });
     }
+
+    if (user && user.email_verification.is_verified) {
+      return res
+        .status(200)
+        .json({
+          success: true,
+          message: "Email already verified, please login",
+        });
+    }
+
+    user.email_verification.is_verified = true;
+    await user.save();
+    return res
+      .status(201)
+      .json({
+        success: true,
+        message: "Email verified successfully, please login",
+      });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "internal server error" });
+    console.log("error verifying email: ", error);
+  }
 };
 
 exports.sendVerificationMail = async (req, res) => {
-   const { email } = req.body;
+  const { email } = req.body;
 
-    try {
-        // Find the user by their email address
-        const user = await userModel.findOne({ email });
+  try {
+    // Find the user by their email address
+    const user = await userModel.findOne({ email });
 
-        // // Check if either user or employer exists
-        if (!user) {
-            return res.status(404).json({ message: 'no user record found with email' });
-        }
+    // // Check if either user or employer exists
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "no user record found with email" });
+    }
 
-        // Generate a unique token (6-digit random number)
-        const email_verification_token = crypto.randomBytes(4).toString('hex');
+    // Generate a unique token (6-digit random number)
+    const email_verification_token = crypto.randomBytes(4).toString("hex");
 
-        // Set an expiration time for the reset token (e.g., 1 hour)
-        const email_verification_code_expiry = Date.now() + 3600000; // 1 hour
+    // Set an expiration time for the reset token (e.g., 1 hour)
+    const email_verification_code_expiry = Date.now() + 3600000; // 1 hour
 
+    const username = user.username;
 
-        const username = user.username; 
+    // Update the found document's fields with the reset token and expiration time
+    user.email_verification.token = email_verification_token;
+    user.email_verification.expiry_date = email_verification_code_expiry;
 
-        // Update the found document's fields with the reset token and expiration time
-        user.email_verification.token = email_verification_token;
-        user.email_verification.expiry_date = email_verification_code_expiry;
+    await user.save();
 
-        await user.save();
-
-        // SEND EMAIL HERE >>>>
-        const mail_options = {
-            emailTo: user.email,
-            subject: "Verify Your Email",
-            html: `
+    // SEND EMAIL HERE >>>>
+    const mail_options = {
+      emailTo: user.email,
+      subject: "Verify Your Email",
+      html: `
                   <!DOCTYPE html>
                     <html>
                     <head>
@@ -761,15 +772,38 @@ exports.sendVerificationMail = async (req, res) => {
                     </table>
                     </body>
                     </html>
-            `
-        };
+            `,
+    };
 
-        await sendEmail(mail_options);
+    await sendEmail(mail_options);
 
-        res.status(200).json({ message: 'verification email sent successfully' });
+    res.status(200).json({ message: "verification email sent successfully" });
+  } catch (error) {
+    console.error("Error sending password reset verification email :", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
-    } catch (error) {
-        console.error('Error sending password reset verification email :', error);
-        res.status(500).json({ message: 'Internal server error' });
+
+const { uploadShopImageOnRegister } = require("../utils/firebaseFileUpload");
+// const { uploadShopImageOnRegister } = require("../utils/uploadConfig");
+const { initializeFormidable } = require('../config/formidable.config');
+
+
+exports.uploadShopImage = async (req, res) => {
+  const form = initializeFormidable();
+
+  form.parse(req, async (err, fields, files) => {
+    if (err) {
+      return res.status(500).json({ message: "error uploading images", err });
     }
+    const file = files["image"][0];
+    const result = await uploadShopImageOnRegister(file);
+
+    if (result.success) {
+      res.status(200).json({ result });
+    } else {
+      res.status(500).json(result);
+    }
+  });
 };
