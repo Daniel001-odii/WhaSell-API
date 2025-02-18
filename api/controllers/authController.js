@@ -230,45 +230,43 @@ exports.login = async (req, res) => {
 };
 
 exports.register = async (req, res) => {
-    const { refferal_code, username, password, email, phone } = req.body;
-    console.log("refferal code: ", refferal_code);
     try {
+        const { refferal_code, username, password, email, phone } = req.body;
+
+        if(!username || !password || !email || !phone){
+            return res.status(400).json({ message: "all fields are required!", fields: "all"});
+        }
+        const existingUserEmail = await User.findOne({ email })
+        if(existingUserEmail){
+            return res.status(400).json({ message: "email already registered!", fields: "email"});
+        }
+
+        const existingPhone = await User.findOne({ phone })
+        if(existingPhone){
+            return res.status(400).json({ message: "phone already registered!", fields: "phone"});
+        }
+
         const user = new User({ email, username, password, phone });
 
-        // check if phone is already registered...
-        const phoneAvailable = await User.findOne({ phone });
-
-        /*
-        if(phoneAvailable){
-            return res.status(400).json({ message: "sorry this number is already registered!"})
-        }
-            */
-
-        // await user.save();
-
         // generate auth tokens and save to cookies to sign-in ...
-
         const accessToken = generateAccessToken(user);
         const refreshToken = generateRefreshToken(user);
         user.refreshToken = refreshToken;
         await user.save();
 
         // save tokens to cookies
-        setAuthCookies(res, accessToken, refreshToken);
+        // setAuthCookies(res, accessToken, refreshToken);
 
-           // Generate a unique token (6-digit random number)
-           const email_verification_token = crypto.randomBytes(4).toString('hex');
+        // Generate a unique token (6-digit random number)
+        const email_verification_token = crypto.randomBytes(4).toString('hex');
 
-           // Set an expiration time for the reset token (e.g., 1 hour)
-           const email_verification_code_expiry = Date.now() + 3600000; // 1 hour
-   
-   
-           const username = user.username; 
-   
-           // Update the found document's fields with the reset token and expiration time
-           user.email_verification.token = email_verification_token;
-           user.email_verification.expiry_date = email_verification_code_expiry;
-   
+        // Set an expiration time for the reset token (e.g., 1 hour)
+        const email_verification_code_expiry = Date.now() + 3600000; // 1 hour
+
+        // Update the found document's fields with the reset token and expiration time
+        user.email_verification.token = email_verification_token;
+        user.email_verification.expiry_date = email_verification_code_expiry;
+
            await user.save();
    
            // SEND EMAIL HERE >>>>
@@ -323,7 +321,7 @@ exports.register = async (req, res) => {
          }
 
 
-        res.status(201).json({ message: 'User registered and logged-in successfully' });
+        res.status(201).json({ message: 'User registered and logged-in successfully', accessToken, refreshToken });
 
     } catch (error) {
         console.log("error registering user: ", error);
