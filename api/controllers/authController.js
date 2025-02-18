@@ -760,7 +760,7 @@ exports.sendVerificationMail = async (req, res) => {
                                 <p style="margin: 0 0 20px;">Thank you for joining WhatSell, where modern e-commerce is redefined. We are thrilled to have you on board. Start exploring our features and find the best deals today!</p>
                                 <p style="">Thank you for registering with WhatSell. Please verify your email address by clicking the link below:</p>
                                 <p style="text-align: left; margin: 20px 0;">
-                                    <a href="${process.env.APP_URL}/login?token=${email_verification_token}"  style="background-color: #47C67F; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a>
+                                    <a href="${process.env.APP_URL}?token=${email_verification_token}"  style="background-color: #47C67F; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a>
                                 </p>
                                 <p style="margin: 0 0 20px;">If you did not request this, please ignore this email.</p>
                             </td>
