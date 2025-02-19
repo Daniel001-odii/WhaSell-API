@@ -365,12 +365,33 @@ exports.updateStoreAvailability = async (req, res) => {
 
 
 // GET ALL SHOPS...
-exports.getAllShops = async (req, res) => {
+/* exports.getAllShops = async (req, res) => {
     try{
         const shops = await Shop.find().populate("owner");
         res.status(200).json({ shops });
     }catch(error){
         res.status(500).json({ success: false, message: "internal server error"});
+        console.log("Error getting shops: ", error);
+    }
+}; */
+
+exports.getAllShops = async (req, res) => {
+    try {
+        const shops = await Shop.find().populate("owner");
+
+        // Iterate over each shop to get the first image of the most recent product
+        for (let shop of shops) {
+            const recentProduct = await Product.findOne({ shop: shop._id }).sort({ createdAt: -1 }).select('images').exec();
+            if (recentProduct && recentProduct.images && recentProduct.images.length > 0) {
+                shop.recentProductImage = recentProduct.images[0];
+            } else {
+                shop.recentProductImage = null; // Or set a default image if needed
+            }
+        }
+
+        res.status(200).json({ shops });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Internal server error" });
         console.log("Error getting shops: ", error);
     }
 };

@@ -207,7 +207,7 @@ exports.login = async (req, res) => {
             `,
     };
 
-    await sendEmail(mail_options);
+   
 
     // Respond with success message
     res.json({
@@ -215,6 +215,9 @@ exports.login = async (req, res) => {
       accessToken,
       refreshToken,
     });
+
+    // await sendEmail(mail_options);
+
   } catch (error) {
     res.status(500).json({ message: "Error logging in", error });
     console.log("error in login: ", error);
