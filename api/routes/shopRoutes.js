@@ -14,6 +14,9 @@ router.get("/:shop_id", shopController.getShopById);
 // get shop by shopname...
 router.get("/:shop_name/full", shopController.getShopByShopname);
 
+// get shop by user....
+router.get("/user/all", protect, shopController.getUserShop);
+
 // edit shop by shop_id...
 router.patch("/:shop_id/edit", protect, shopController.editShop);
 

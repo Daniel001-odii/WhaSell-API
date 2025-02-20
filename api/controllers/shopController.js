@@ -24,6 +24,7 @@ const userModel = require("../models/userModel.js");
 const cron = require('node-cron');
 const Wallet = require('../models/walletModel.js'); // Assuming you have a Wallet model
 const BoostedShop = require("../models/boostedShopModel.js");
+const { default: mongoose } = require("mongoose");
 
 // Controller to change shop profile image
 /* exports.changeShopImage = async (req, res) => {
@@ -152,6 +153,46 @@ exports.getShopByShopname = async (req, res) => {
     }
 };
 
+// GET A SHOP BY ITS USer
+// GET A SHOP BY ITS USER
+exports.getUserShop = async (req, res) => {
+    try {
+        const user = req.userModel; // Ensure this contains user info
+
+        console.log("user: ", user)
+    
+        if (!user || !user._id) {
+            return res.status(400).json({ success: false, message: "User authentication required." });
+        }
+
+        // Find the shop by owner ID
+        const shop = await Shop.findOne({ owner: user._id }).populate("owner");
+
+        console.log("shop: ", shop)
+
+        if (!shop) {
+            return res.status(404).json({ success: false, message: "Shop not found for this user." });
+        }
+
+        // Convert shop document to plain object before modifying
+        let shopData = shop.toObject();
+
+        // Find all products belonging to the shop
+        const products = await Product.find({ shop: shop._id });
+        shopData.products = products;
+        shopData.listings = products.length;
+        
+        // Followers count
+        shopData.followers_count = shop.followers.length;
+
+        res.status(200).json({ success: true, shop: shopData });
+    } catch (error) {
+        console.error("Error getting shop: ", error);
+        res.status(500).json({ success: false, message: "Failed to get shop", error: error.message });
+    }
+};
+
+
 exports.getShopById = async(req, res) => {
     try{
         const shop_id = req.params.shop_id;
@@ -179,10 +220,6 @@ exports.getShopById = async(req, res) => {
 // EDIT SHOP...
 exports.editShop = async (req, res) => {
     try {
-        const form = req.body;
-        console.log("from client: ", form);
-
-
         const shop_id = req.params.shop_id;
         let shop = await Shop.findById(shop_id);
 
@@ -190,8 +227,8 @@ exports.editShop = async (req, res) => {
             name,
             description,
             category,
-            profile
-        } = req.body;
+            image
+        } = req.body.shop;
 
          // check if store name already exists..
          const exisitngShop = await Shop.findOne({ name });
@@ -209,15 +246,7 @@ exports.editShop = async (req, res) => {
         // if (name) shop.name = name;
         if (description) shop.description = description;
         if (category) shop.category = category;
-        if(profile){
-            if(profile.location){
-                if (city) shop.profile.location.city = city;
-                if (LGA) shop.profile.location.LGA = LGA;
-                if (state) shop.profile.location.state = state;
-                if (address) shop.profile.location.address = address;
-            }
-            if (phone) shop.profile.phone = phone;
-        }
+       shop.profile.image_url = image ? image :  shop.profile.image_url;
         
 
         // Save updated shop
@@ -267,22 +296,7 @@ exports.followStore = async (req, res) => {
         if(shop.owner == user_id){
             return res.status(400).json({ success: false, message: "sorry, you cant follow your own shop" });
         }
-
-        // Add user to shop's followers
-       /*  shop.followers.push(user_id);
-        await shop.save();
- */
-        // Optionally, update user's followed shops
-        /*
-        const user = await User.findById(user_id);
-        user.followedShops.push(shop_id);
-        await user.save();
-        */
-
-        
-
-
-        res.status(200).json({ success: true, message: "You are now following the shop", shop });
+        // res.status(200).json({ success: true, message: "You are now following the shop", shop });
     } catch (error) {
         res.status(500).json({ success: false, message: "Failed to follow shop", error: error.message });
         console.log("Error following shop: ", error);
@@ -314,7 +328,7 @@ exports.addViewToStore = async (req, res) => {
             // Increment the view count
            
             shop.views += 1;
-            // await shop.save();
+            await shop.save();
 
             viewed_shops.push(shop._id);
 

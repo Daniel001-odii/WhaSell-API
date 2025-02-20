@@ -358,7 +358,7 @@ exports.getProductsByShopId = async (req, res) => {
       return res.status(404).json({ message: "shop not found" });
     }
 
-    const { page = 1, limit = 5 } = req.query; // Default to page 1 and limit 10
+    const { page = 1, limit = 10 } = req.query; // Default to page 1 and limit 10
 
     const products = await Product.find({ shop: shop._id })
       .skip((page - 1) * limit)
@@ -453,11 +453,24 @@ exports.addProductToLikes = async (req, res) => {
 /* 
   edit a product
 */
+/* name
+description
+price
+category
+charge_for_delivery
+ */
 exports.editProduct = async (req, res) => {
   try {
     const product_id = req.params.product_id;
-    const updates = req.body;
+    const { 
+      name,
+      description,
+      price,
+      category,
+      charge_for_delivery
+    } = req.body.product;
 
+    console.log("from client: ", req.body)
     const product = await Product.findById(product_id);
 
     if (!product) {
@@ -465,9 +478,15 @@ exports.editProduct = async (req, res) => {
     }
 
     // Update the product with the new data
-    Object.keys(updates).forEach(key => {
+    /* Object.keys(updates).forEach(key => {
       product[key] = updates[key];
-    });
+    }); */
+    product.name = name ? name : product.name;
+    product.description = description ? description : product.description;
+    product.price = price ? price : product.price;
+    product.category = name ? category : product.category;
+    product.charge_for_delivery = charge_for_delivery ? charge_for_delivery : product.charge_for_delivery;
+
 
     await product.save();
 
