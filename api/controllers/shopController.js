@@ -293,8 +293,8 @@ exports.followStore = async (req, res) => {
 // ADD VIEW TO STORE...
 exports.addViewToStore = async (req, res) => {
     try {
-        const shop_id = req.params.shop_id;
-        let shop = await Shop.findById(shop_id);
+        const shop_name = req.params.shop_name.toLowerCase();
+        let shop = await Shop.findOne({ name: shop_name })
 
         let shop_views = shop.views;
 
@@ -310,13 +310,13 @@ exports.addViewToStore = async (req, res) => {
         } else {
             viewed_shops = JSON.parse(viewed_shops);
         };
-        if(!viewed_shops.includes(shop_id)){
+        if(!viewed_shops.includes(shop._id)){
             // Increment the view count
            
             shop.views += 1;
-            await shop.save();
+            // await shop.save();
 
-            viewed_shops.push(shop_id);
+            viewed_shops.push(shop._id);
 
             // Update the 'viewed_products' cookie with the new array
             res.cookie('viewed_shops', JSON.stringify(viewed_shops), {
@@ -377,76 +377,41 @@ exports.updateStoreAvailability = async (req, res) => {
 
 exports.getAllShops = async (req, res) => {
     try {
+        // Fetch all shops
         const shops = await Shop.find().populate("owner");
 
-        // Iterate over each shop to get the first image of the most recent product
-        for (let shop of shops) {
-            const recentProduct = await Product.findOne({ shop: shop._id }).sort({ createdAt: -1 }).select('images').exec();
-            if (recentProduct && recentProduct.images && recentProduct.images.length > 0) {
-                shop.recentProductImage = recentProduct.images[0];
-            } else {
-                shop.recentProductImage = null; // Or set a default image if needed
+        // Fetch the most recent product for each shop with its first image
+        const shopHeaderImages = await Product.aggregate([
+            {
+                $match: { images: { $exists: true, $ne: [] } } // Ensure products have images
+            },
+            {
+                $sort: { createdAt: -1 } // Sort products by most recent first
+            },
+            {
+                $group: {
+                    _id: "$shop", // Group by shop ID
+                    firstImage: { $first: "$images" } // Take the first image from the most recent product
+                }
             }
-        }
+        ]);
 
-        res.status(200).json({ shops });
+        // Map shops to include the headerImage
+        const shopsWithHeaderImages = shops.map(shop => {
+            const headerImageEntry = shopHeaderImages.find(entry => String(entry._id) === String(shop._id));
+            return {
+                ...shop.toObject(),
+                headerImage: headerImageEntry ? headerImageEntry.firstImage : null
+            };
+        });
+
+        res.status(200).json({ shops: shopsWithHeaderImages });
     } catch (error) {
         res.status(500).json({ success: false, message: "Internal server error" });
         console.log("Error getting shops: ", error);
     }
 };
 
-/* exports.getShopsAnalytics = async (req, res) => {
-    try {
-        const user_id = req.user;
-        const shop = await shopModel.findOne(
-            { owner: user_id }, 
-            "views followers sold_products best_selling_product"
-        );
-
-        if (!shop) {
-            return res.status(404).json({ message: "Couldn't find shop!" });
-        }
-
-        const followers_count = shop.followers.length;
-        let best_selling_product = shop.best_selling_product;
-        if (!best_selling_product) {
-            shop.best_selling_product = "No data available";
-        }
-
-        // Group followers by month and count them
-        const monthNames = [
-            "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"
-        ];
-        const followersByMonth = {};
-
-        shop.followers.forEach(follower => {
-            const month = follower.date.getMonth();  // Get month as an index (0 = January)
-            const monthName = monthNames[month];
-            followersByMonth[monthName] = (followersByMonth[monthName] || 0) + 1;
-        });
-
-        // Prepare chart_data
-        const labels = Object.keys(followersByMonth);
-        const data = Object.values(followersByMonth);
-        const bgColor = labels.map(() => `#${Math.floor(Math.random()*16777215).toString(16)}`);
-
-        const chart_data = {
-            labels: labels,
-            datasets: [{
-                backgroundColor: bgColor,
-                data: data
-            }]
-        };
-
-        res.status(200).json({ shop, followers_count, chart_data });
-
-    } catch (error) {
-        res.status(500).json({ success: false, message: "Internal server error" });
-        console.log("Error getting shops: ", error);
-    }
-}; */
 
 exports.getShopsAnalytics = async (req, res) => {
     try {
@@ -540,7 +505,33 @@ exports.getShopsInNearByStates = async (req, res) => {
             const shops_in_user_state = await shopModel.find({
                 'profile.location.state': { $regex: `^${normalized_user_state}`, $options: 'i' }
             });
-            shops_near_me.push(...shops_in_user_state);
+             // Fetch the most recent product for each shop with its first image [NEW]
+            const shopHeaderImages = await Product.aggregate([
+                {
+                    $match: { images: { $exists: true, $ne: [] } } // Ensure products have images
+                },
+                {
+                    $sort: { createdAt: -1 } // Sort products by most recent first
+                },
+                {
+                    $group: {
+                        _id: "$shop", // Group by shop ID
+                        firstImage: { $first: "$images" } // Take the first image from the most recent product
+                    }
+                }
+            ]);
+
+            // Map shops to include the headerImage [NEW]
+            const shopsWithHeaderImages = shops_in_user_state.map(shop => {
+                const headerImageEntry = shopHeaderImages.find(entry => String(entry._id) === String(shop._id));
+                return {
+                    ...shop.toObject(),
+                    headerImage: headerImageEntry ? headerImageEntry.firstImage : null
+                };
+            });
+
+            // shops_near_me.push(...shops_in_user_state);
+            shops_near_me.push(...shopsWithHeaderImages);
 
             // Now find shops in neighboring states
             for (const neighbor of state_object.neighbors) {
@@ -582,10 +573,33 @@ exports.getGlipsByFollowedShops = async (req, res) => {
         const user = await userModel.findById(user_id);
 
         const followed_shops = await shopModel.find({ _id: { $in: user.followed_shops }});
+        const shopHeaderImages = await Product.aggregate([
+            {
+                $match: { images: { $exists: true, $ne: [] } } // Ensure products have images
+            },
+            {
+                $sort: { createdAt: -1 } // Sort products by most recent first
+            },
+            {
+                $group: {
+                    _id: "$shop", // Group by shop ID
+                    firstImage: { $first: "$images" } // Take the first image from the most recent product
+                }
+            }
+        ]);
+
+        // Map shops to include the headerImage [NEW]
+        const shops = followed_shops.map(shop => {
+            const headerImageEntry = shopHeaderImages.find(entry => String(entry._id) === String(shop._id));
+            return {
+                ...shop.toObject(),
+                headerImage: headerImageEntry ? headerImageEntry.firstImage : null
+            };
+        });
         
         const glips = await glipModel.find({ shop: { $in: user.followed_shops }}).populate("shop name");
 
-        res.status(200).json({ glips, followed_shops });
+        res.status(200).json({ glips, followed_shops, shops });
        
  
     }catch(error){

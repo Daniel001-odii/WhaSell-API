@@ -350,19 +350,21 @@ const addWatermark = async (filePath, full_text) => {
 // get products by shop id with pagination..
 exports.getProductsByShopId = async (req, res) => {
   try {
-    const shop_id = req.params.shop_id;
-    const shop = await Shop.findById(shop_id);
+    const shop_name = req.params.shop_name.toLowerCase();;
+
+
+    const shop = await Shop.findOne({ name: shop_name });
     if (!shop) {
       return res.status(404).json({ message: "shop not found" });
     }
 
     const { page = 1, limit = 5 } = req.query; // Default to page 1 and limit 10
 
-    const products = await Product.find({ shop: shop_id })
+    const products = await Product.find({ shop: shop._id })
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
 
-    const totalProducts = await Product.countDocuments({ shop: shop_id });
+    const totalProducts = await Product.countDocuments({ shop: shop._id });
 
     res.status(200).json({
       products,

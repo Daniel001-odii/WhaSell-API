@@ -26,8 +26,8 @@ router.post('/image', productController.uploadProductImages);
 router.delete('/image/delete', productController.deleteUpload);
 
 
-// get shop products by shop id...
-router.get('/:shop_id/shop', productController.getProductsByShopId);
+// get shop products by shop id or shop name...
+router.get('/:shop_name/shop', productController.getProductsByShopId);
 
 
 // delete product by its ID...

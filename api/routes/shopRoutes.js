@@ -21,7 +21,7 @@ router.patch("/:shop_id/edit", protect, shopController.editShop);
 router.post("/:shop_id/follow", protect, shopController.followStore);
 
 // add views to shop...
-router.get("/:shop_id/view", shopController.addViewToStore);
+router.get("/:shop_name/view", shopController.addViewToStore);
 
 // get all shops...
 router.get("/list/all", shopController.getAllShops);
