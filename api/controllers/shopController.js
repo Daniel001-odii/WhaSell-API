@@ -73,6 +73,10 @@ exports.createNewShop = async (req, res) => {
     try {
         // get shop name and description via request body
         const { name, description, category } = req.body;
+        if(!name || !description || !category){
+            return res.status(400).json({ message: "all fields are required to create shop"})
+        }
+        
         console.log("from client :", req.body);
 
         const shop_name = name.split(" ").join("-");

@@ -159,9 +159,9 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials provided" });
     }
 
-    if (user && user.email_verification.is_verified != true) {
+  /*   if (user && user.email_verification.is_verified != true) {
       return res.status(400).json({ message: "email not verified" });
-    }
+    } */
 
     const username = user.username;
 
