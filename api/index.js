@@ -23,7 +23,8 @@ const corsOptions = {
     'https://whatsell.com.ng', 
     'https://www.whatsell.store', 
     'https://whatsell.store', 
-    'https://whasell.onrender.com'],// Specify your frontend URL
+    'https://whasell.onrender.com'
+    ],// Specify your frontend URL
   credentials: true // Enable credentials
 };
 

@@ -398,6 +398,44 @@ exports.getGlipsByShopId = async (req, res) => {
   }
 }
 
+// get all glips grouped by shops...
+exports.getAllGlipsGrouedByShop = async (req, res) => {
+  try {
+    // Fetch all shops with selected details
+    const shops = await Shop.find()
+
+    // Create an array to store the final result
+    const shopsWithGlips = await Promise.all(
+      shops.map(async (shop) => {
+        // Fetch all glips for this shop
+        const glips = await Glip.find({ shop: shop._id });
+
+        // Return shop details with its glips
+        return {
+          shop,
+          glips: glips
+        };
+      })
+    );
+
+    // Filter out shops that have no glips (optional)
+    const result = shopsWithGlips.filter(shopGroup => shopGroup.glips.length > 0);
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+
+  } catch (error) {
+    console.log("error getting glips grouped by shop: ", error);
+    res.status(500).json({ 
+      success: false,
+      message: 'internal server error'
+    });
+  }
+};
+
+
 // delete product...
 exports.deleteProductById = async (req, res) => {
   try{
