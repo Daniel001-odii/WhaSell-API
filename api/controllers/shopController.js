@@ -585,12 +585,13 @@ exports.getShopsInNearByStates = async (req, res) => {
 
 
 // get glips from followed shops...
-exports.getGlipsByFollowedShops = async (req, res) => {
+/* exports.getGlipsByFollowedShops = async (req, res) => {
     try{
         const user_id = req.user;
         const user = await userModel.findById(user_id);
 
         const followed_shops = await shopModel.find({ _id: { $in: user.followed_shops }});
+
         const shopHeaderImages = await Product.aggregate([
             {
                 $match: { images: { $exists: true, $ne: [] } } // Ensure products have images
@@ -624,7 +625,7 @@ exports.getGlipsByFollowedShops = async (req, res) => {
         res.status(500).json({ message: "error getting glips from followed shops"});
     }
 };
-
+ */
 
 
 exports.getAllGlips = async (req, res) => {

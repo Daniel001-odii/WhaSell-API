@@ -5,6 +5,7 @@ const  { protect } = require("../middlewares/authMiddleware");
 
 const productController = require('../controllers/productController');
 const { checkcoins } = require("../middlewares/coins.middleware");
+const { deleteVideo } = require("../utils/cloudinaryVideo");
 
 // routes goes here...
 router.get('', productController.getAllProducts);
@@ -44,6 +45,10 @@ router.get('/search/product', productController.searchProducts);
 
 // get products by category name
 router.get('/products_by_category/:categoryName', productController.getProductsByCategory);
+
+// get similar products...
+router.get('/similar/all', productController.getSimilarProducts);
+
 /* 
 **
     GLIPS...
@@ -59,10 +64,16 @@ router.get('/glips/:shop_id/all', productController.getGlipsByShopId);
 // upload new glip video
 router.post('/glips/new', protect, checkcoins, productController.newGlipVideo);
 
-router.get('/glips/all_shops', productController.getAllGlipsGrouedByShop);
+router.delete('/glips/delete/:publicId', deleteVideo)
 
-// get similar products...
-router.get('/similar/all', productController.getSimilarProducts);
+// get glips from all shops...
+router.get('/glips/all_shops', productController.getAllGlipsGroupedByShop);
+
+router.get('/glips/details/:glip_id', productController.getGlipDetailById);
+
+// get glips from followed shops...
+router.get('/glips/followed_shops/all_glips', protect, productController.getAllGlipsGroupedByShopFollowing);
+
 
 
 module.exports = router;

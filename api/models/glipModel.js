@@ -18,6 +18,9 @@ const glipSchema = new Schema({
         type: String,
         required: [true, "glip video url is missing"]
     },
+    thumbnail: {
+        type: String,
+    },
     price: {
         type: Number,
         required: [true, "glip price is required"],

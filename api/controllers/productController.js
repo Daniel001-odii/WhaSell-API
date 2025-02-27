@@ -74,6 +74,9 @@ exports.uploadProductImages = async (req, res) => {
    })
 };
 
+
+// USES CLOUDINARY
+const { uploadVideo } = require('../utils/cloudinaryVideo');
 exports.uploadGlipVideo = async (req, res) => {
   const form = initializeFormidable();
 
@@ -82,12 +85,13 @@ exports.uploadGlipVideo = async (req, res) => {
      return res.status(500).json({ message: "error uploading glip video", err});
    };
    const file = files['video'][0];
-   const result = await uploadGlipVideo(file);
-
-   if(result.success) {
-     res.status(200).json({result});
+   const result = await uploadVideo(file.filepath);
+   console.log("file uploaded! ", result)
+   if(result){
+    res.status(200).json({ result })
    } else {
-     res.status(500).json(result);
+    res.status(500).json(result);
+
    }
 
   })
@@ -235,9 +239,33 @@ exports.newGlipVideo = async (req, res) => {
             shop: user.shop,
         });
 
-        await new_glip.save();
+        // perform coins deduction here and send transaction logs too...
+      // check coin balance...
+      const wallet = await walletModel.findOne({ user: user_id });
+      const user_balance = wallet.balance;
 
-        res.status(200).json({ message: "New glip uploaded successfully!", glip: new_glip, user });
+      // check for low coin balance...
+      if(user_balance == 0){
+          console.log("insufficient coins balance please top-up!");
+          return res.status(400).json({ message: "insufficient coin balance, please purchase more coins!"})
+      }
+      
+      // DEBIT COINS CREDITS FOR PRODUCT UPLOAD...
+      const upload_fee = 5
+      const wallet_balance = user_balance - upload_fee;
+      wallet.balance = wallet_balance;
+
+      const today = new Date();
+      wallet.debit_transactions.push({
+        date: today,
+        coin_amount: upload_fee,
+        narration: 'debit for product listing'
+      })
+      await wallet.save();
+
+      await new_glip.save();
+
+      res.status(200).json({ message: "New glip uploaded successfully!", glip: new_glip, user });
 
         // send a notification when new product is uploaded...
 
@@ -281,13 +309,13 @@ exports.newProduct = async (req, res) => {
       const user_balance = wallet.balance;
 
       // check for low coin balance...
-     /*  if(user_balance == 0){
+      if(user_balance == 0){
           console.log("insufficient coins balance please top-up!");
           return res.status(400).json({ message: "insufficient coin balance, please purchase more coins!"})
-      } */
+      }
       
       // DEBIT COINS CREDITS FOR PRODUCT UPLOAD...
-      const upload_fee = 0
+      const upload_fee = 2
       const wallet_balance = user_balance - upload_fee;
       wallet.balance = wallet_balance;
 
@@ -389,7 +417,7 @@ exports.getGlipsByShopId = async (req, res) => {
           res.status(404).json({ message: "shop not found"});
       }
 
-      const glips = await Glip.find({ shop: shop_id })
+      const glips = await Glip.find({ shop: shop_id }).populate('shop');
       res.status(200).json({ glips });
 
   }catch(error){
@@ -399,7 +427,7 @@ exports.getGlipsByShopId = async (req, res) => {
 }
 
 // get all glips grouped by shops...
-exports.getAllGlipsGrouedByShop = async (req, res) => {
+exports.getAllGlipsGroupedByShop = async (req, res) => {
   try {
     // Fetch all shops with selected details
     const shops = await Shop.find()
@@ -408,7 +436,7 @@ exports.getAllGlipsGrouedByShop = async (req, res) => {
     const shopsWithGlips = await Promise.all(
       shops.map(async (shop) => {
         // Fetch all glips for this shop
-        const glips = await Glip.find({ shop: shop._id });
+        const glips = await Glip.find({ shop: shop._id }).populate('shop');;
 
         // Return shop details with its glips
         return {
@@ -434,6 +462,68 @@ exports.getAllGlipsGrouedByShop = async (req, res) => {
     });
   }
 };
+
+exports.getAllGlipsGroupedByShopFollowing = async (req, res) => {
+  try {
+    const user_id = req.user;
+    const user = await userModel.findById(user_id);
+
+    const followed_shops = await Shop.find({ _id: { $in: user.followed_shops }})
+    // Fetch all followed_shops with selected details
+    // const followed_shops = await Shop.find()
+
+    // Create an array to store the final result
+    const shopsWithGlips = await Promise.all(
+      followed_shops.map(async (shop) => {
+        // Fetch all glips for this shop
+        const glips = await Glip.find({ shop: shop._id }).populate('shop');
+
+        // Return shop details with its glips
+        return {
+          shop,
+          glips: glips
+        };
+      })
+    );
+
+    // Filter out followed_shops that have no glips (optional)
+    const result = shopsWithGlips.filter(shopGroup => shopGroup.glips.length > 0);
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+
+  } catch (error) {
+    console.log("error getting glips grouped by shop: ", error);
+    res.status(500).json({ 
+      success: false,
+      message: 'internal server error'
+    });
+  }
+};
+
+// get glip by id..
+// get product by its ID....
+exports.getGlipDetailById = async (req, res) => {
+  try {
+      const glip_id = req.params.glip_id;
+
+      const glip = await Glip.findById(glip_id)
+      .populate('shop');
+
+      const all_glips = await Glip.find().populate('shop');
+
+      const result = [glip, ...all_glips];
+
+      res.status(200).json({ result });
+  } catch (error) {
+      console.log("error getting glip: ", error);
+      res.status(500).json({ message: 'internal server error' });
+  }
+};
+
+
 
 
 // delete product...
