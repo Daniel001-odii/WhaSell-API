@@ -425,7 +425,13 @@ exports.getGlipsByShopId = async (req, res) => {
           res.status(404).json({ message: "shop not found"});
       }
 
-      const glips = await Glip.find({ shop: shop_id }).populate('shop');
+      const glips = await Glip.find({ shop: shop_id }).populate({
+        path: "shop",
+        populate: {
+          path:"owner"
+        }
+      });
+      glips.reverse()
       res.status(200).json({ glips });
 
   }catch(error){
@@ -444,7 +450,12 @@ exports.getAllGlipsGroupedByShop = async (req, res) => {
     const shopsWithGlips = await Promise.all(
       shops.map(async (shop) => {
         // Fetch all glips for this shop
-        const glips = await Glip.find({ shop: shop._id }).populate('shop');;
+        const glips = await Glip.find({ shop: shop._id }).populate({
+          path: "shop",
+          populate: {
+            path:"owner"
+          }
+        });
 
         // Return shop details with its glips
         return {
@@ -456,7 +467,7 @@ exports.getAllGlipsGroupedByShop = async (req, res) => {
 
     // Filter out shops that have no glips (optional)
     const result = shopsWithGlips.filter(shopGroup => shopGroup.glips.length > 0);
-
+    result.reverse();
     res.status(200).json({
       success: true,
       data: result
@@ -484,7 +495,12 @@ exports.getAllGlipsGroupedByShopFollowing = async (req, res) => {
     const shopsWithGlips = await Promise.all(
       followed_shops.map(async (shop) => {
         // Fetch all glips for this shop
-        const glips = await Glip.find({ shop: shop._id }).populate('shop');
+        const glips = await Glip.find({ shop: shop._id }).populate({
+          path: "shop",
+          populate: {
+            path:"owner"
+          }
+        });
 
         // Return shop details with its glips
         return {
@@ -495,7 +511,7 @@ exports.getAllGlipsGroupedByShopFollowing = async (req, res) => {
     );
 
     // Filter out followed_shops that have no glips (optional)
-    const result = shopsWithGlips.filter(shopGroup => shopGroup.glips.length > 0);
+    const result = shopsWithGlips.reverse().filter(shopGroup => shopGroup.glips.length > 0);
 
     res.status(200).json({
       success: true,
@@ -518,11 +534,21 @@ exports.getGlipDetailById = async (req, res) => {
       const glip_id = req.params.glip_id;
 
       const glip = await Glip.findById(glip_id)
-      .populate('shop');
+      .populate({
+        path: "shop",
+        populate: {
+          path:"owner"
+        }
+      });
 
-      const all_glips = await Glip.find().populate('shop');
+      const all_glips = await Glip.find().populate({
+        path: "shop",
+        populate: {
+          path:"owner"
+        }
+      });
 
-      const result = [glip, ...all_glips];
+      const result = [glip, ...all_glips].reverse();
 
       res.status(200).json({ result });
   } catch (error) {
@@ -531,6 +557,39 @@ exports.getGlipDetailById = async (req, res) => {
   }
 };
 
+exports.getAllGlips = async (req, res) => {
+try{
+  const glips = await Glip.find().populate({
+    path: "shop",
+    populate: {
+      path:"owner"
+    }
+  });
+  glips.reverse();
+  res.status(200).json({ glips });
+}catch(err){
+  res.status(500).json({ message: 'internal server error'});
+}
+}
+
+// delete product...
+exports.deleteGlipById = async (req, res) => {
+  try {
+    const glip_id = req.params.glip_id;
+    const glip = await Glip.findById(glip_id);
+
+    if (!glip) {
+      return res.status(404).json({ message: "Cannot find requested glip" });
+    }
+
+    await glip.deleteOne({ _id: glip_id });
+    res.status(201).json({ message: "Glip deleted successfully" });
+
+  } catch (error) {
+    console.log("Error deleting glip: ", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 
 

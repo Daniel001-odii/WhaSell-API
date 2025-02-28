@@ -74,6 +74,10 @@ router.get('/glips/details/:glip_id', productController.getGlipDetailById);
 // get glips from followed shops...
 router.get('/glips/followed_shops/all_glips', protect, productController.getAllGlipsGroupedByShopFollowing);
 
+// get all glips...
+router.get('/glips/all', productController.getAllGlips);
 
+// delete glip by its ID...
+router.delete('/glips/:glip_id/delete', protect, productController.deleteGlipById);
 
 module.exports = router;
