@@ -81,20 +81,27 @@ exports.uploadGlipVideo = async (req, res) => {
   const form = initializeFormidable();
 
   form.parse(req, async (err, fields, files) => {
-   if(err){
-     return res.status(500).json({ message: "error uploading glip video", err});
-   };
-   const file = files['video'][0];
-   const result = await uploadVideo(file.filepath);
-   console.log("file uploaded! ", result)
-   if(result){
-    res.status(200).json({ result })
-   } else {
-    res.status(500).json(result);
+    if (err) {
+      return res.status(500).json({ message: "Error uploading video", error: err });
+    }
 
-   }
+    const file = files['video'][0];
 
-  })
+    try {
+      const result = await uploadVideo(file.filepath);
+
+      if (result) {
+        return res.status(200).json({
+          videoUrl: result.videoUrl,
+          thumbnailUrl: result.thumbnailUrl,
+        });
+      } else {
+        return res.status(500).json({ message: "Upload failed" });
+      }
+    } catch (error) {
+      return res.status(500).json({ message: "Upload error", error });
+    }
+  });
 };
 
 exports.deleteUpload = async (req, res) => {
@@ -224,7 +231,7 @@ exports.newGlipVideo = async (req, res) => {
         const user_id = req.user;
         const user = await User.findById(user_id).populate();
 
-        const { name, description, category, video_url, condition, price, charge_for_delivery, price_negotiable, delivery_fee } = req.body;
+        const { name, description, category, video_url, condition, price, charge_for_delivery, price_negotiable, delivery_fee, thumbnail } = req.body;
         console.log('client: ', req.body)
         const new_glip = new Glip({
             name,
@@ -237,6 +244,7 @@ exports.newGlipVideo = async (req, res) => {
             price_negotiable,
             delivery_fee,
             shop: user.shop,
+            thumbnail,
         });
 
         // perform coins deduction here and send transaction logs too...
