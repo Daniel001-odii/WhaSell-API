@@ -56,8 +56,8 @@ exports.uploadProductImages = async (req, res) => {
 
     // Apply watermark to each uploaded image
     try {
-      const watermarkPromises = addWatermark(file.filepath, "...");
-      await watermarkPromises;
+      // const watermarkPromises = addWatermark(file.filepath, "...");
+      // await watermarkPromises;
     } catch (error) {
       console.log("Error applying watermark: ", error);
       return res.status(500).send({ error: 'Failed to apply watermark.' });
