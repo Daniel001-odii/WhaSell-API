@@ -737,7 +737,7 @@ exports.boostShop = async (req, res) => {
      
 
 
-        if(duration){
+        if(duration > 0){
             // Create a new boosted shop entry
             const boostedShop = new BoostedShop({
                 shop: shop_id,

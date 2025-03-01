@@ -152,13 +152,21 @@ exports.searchProducts = async (req, res) => {
       ]
     });
 
+    const glips = await Glip.find({
+      $or: [
+        { name: searchRegex },
+        { description: searchRegex },
+        { condition: searchRegex }
+      ]
+    });
+
    /*  if(products.length > 0){
       return res.status(200).json({ products });
     } else {
       return res.status(201).json({ alternate_products });
     } */
 
-    res.status(200).json({ products, alternate_products });
+    res.status(200).json({ products, glips, alternate_products });
    
   } catch (error) {
     console.log("Error searching products:", error);
@@ -548,7 +556,7 @@ exports.getGlipDetailById = async (req, res) => {
         }
       });
 
-      const result = [glip, ...all_glips].reverse();
+      const result = [glip, ...all_glips];
 
       res.status(200).json({ result });
   } catch (error) {
