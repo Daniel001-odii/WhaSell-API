@@ -801,7 +801,8 @@ exports.uploadShopImage = async (req, res) => {
       return res.status(500).json({ message: "error uploading images", err });
     }
     const file = files["image"][0];
-    const result = await uploadShopImageOnRegister(file);
+    // const result = await uploadShopImageOnRegister(file);
+    const result = await uploadShopImageOnRegister(file, "shop-images", "new shop");
 
     if (result.success) {
       res.status(200).json({ result });

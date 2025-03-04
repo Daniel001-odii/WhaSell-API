@@ -21,7 +21,7 @@ const resizeImage = async (filePath) => {
   }
 };
 
-const uploadFile = async (file, folder) => {
+const uploadFile = async (file, folder, shop_name) => {
   try {
     const filePath = file.filepath;
 
@@ -29,7 +29,8 @@ const uploadFile = async (file, folder) => {
     const compressedFilePath = await resizeImage(filePath);
 
     // Set a preferred path on Firebase Storage
-    const remoteFilePath = `${folder}/${file.originalFilename}`;
+    const str = new Date().toISOString().replace(/[-:.]/g, "");
+    const remoteFilePath = `${folder}/${file.originalFilename}-${str}`;
 
     // Upload the processed image
     await bucket.upload(compressedFilePath, { destination: remoteFilePath });
@@ -52,8 +53,8 @@ const uploadFile = async (file, folder) => {
 };
 
 const uploadProductImages = async (file) => uploadFile(file, "product-images");
-const uploadShopImageOnRegister = async (file) => uploadFile(file, "shop-images");
-const uploadShopProfileImage = async (file) => uploadFile(file, "shop-images");
+const uploadShopImageOnRegister = async (file, shop_name) => uploadFile(file, "shop-images", shop_name);
+const uploadShopProfileImage = async (file, shop_name) => uploadFile(file, "shop-images", shop_name);
 
 // Video uploads remain unchanged
 // Add this helper function at the top with other utilities

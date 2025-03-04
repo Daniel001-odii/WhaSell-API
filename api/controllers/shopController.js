@@ -44,7 +44,9 @@ const { default: mongoose } = require("mongoose");
  */
 exports.changeShopImage = async (req, res) => {
     const form = initializeFormidable();
-    const shop_id = req.params.shop_id;
+    // const shop_id = req.params.shop_id;
+    // const shop = await Shop.findById(shop_id);
+    const shop_id = req.userModel.shop;
     const shop = await Shop.findById(shop_id);
 
     form.parse(req, async (err, fields, files) => {
@@ -53,7 +55,7 @@ exports.changeShopImage = async (req, res) => {
      };
  
      const file = files['shop_image'][0];
-     const result = await uploadShopProfileImage(file);
+     const result = await uploadShopProfileImage(file, shop.name);
  
      if(result.success) {
         shop.profile.image_url = result.url;
