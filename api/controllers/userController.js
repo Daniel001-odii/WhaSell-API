@@ -436,7 +436,7 @@ const {
 const Product = require('../models/productModel');
 const sendEmail = require("../utils/sendEmail"); // Assuming you have this utility
 
-exports.checkLastProductListingAndSendEmailAlert = async () => {
+exports.checkLastProductListingAndSendEmailAlert = async (req, res) => {
     try {
         // Get all users who are sellers and have a shop
         const sellers = await User.find({ 
@@ -446,6 +446,7 @@ exports.checkLastProductListingAndSendEmailAlert = async () => {
 
         const currentDate = new Date();
         const twoDaysInMs = 2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
+        const emailsSent = []; // Array to store emails that received alerts
 
         // Process each seller
         for (const seller of sellers) {
@@ -506,6 +507,7 @@ exports.checkLastProductListingAndSendEmailAlert = async () => {
                     };
 
                     await sendEmail(mail_options);
+                    emailsSent.push(seller.email); // Add email to successful sends list
                     console.log(`Email reminder sent to ${seller.email}`);
                 }
             } catch (userError) {
@@ -514,9 +516,28 @@ exports.checkLastProductListingAndSendEmailAlert = async () => {
             }
         }
 
+        // Return response with all emails that received alerts
+        if (res) {
+            return res.status(200).json({
+                message: `Email reminders sent to ${emailsSent.length} sellers`,
+                emailsSent: emailsSent
+            });
+        }
+
         console.log('Product listing reminder check completed');
+        return {
+            message: `Email reminders sent to ${emailsSent.length} sellers`,
+            emailsSent: emailsSent
+        };
+
     } catch (error) {
         console.error('Error in checkLastProductListingAndSendEmailAlert:', error);
-        throw error; // Let the cron job handle the error
+        if (res) {
+            return res.status(500).json({
+                message: 'Error processing email reminders',
+                error: error.message
+            });
+        }
+        throw error; // For cron job usage
     }
 };
