@@ -427,3 +427,96 @@ exports.paystackWebhook = async (req, res) => {
 // getNo.OfShopVisitors...
 
 // getProductsSold against Time(month, week, day)
+
+// check for last time a user posted a product...
+const {
+  EMAIL_FOOTER_SECTION,
+  EMAIL_HEADER_SECTION,
+} = require("../utils/emailTemplates");
+const Product = require('../models/productModel');
+const sendEmail = require("../utils/sendEmail"); // Assuming you have this utility
+
+exports.checkLastProductListingAndSendEmailAlert = async () => {
+    try {
+        // Get all users who are sellers and have a shop
+        const sellers = await User.find({ 
+            account_type: 'seller', 
+            shop: { $exists: true }
+        }).populate('shop');
+
+        const currentDate = new Date();
+        const twoDaysInMs = 2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
+
+        // Process each seller
+        for (const seller of sellers) {
+            try {
+                // Get the most recent product from this seller's shop
+                const latestProduct = await Product.findOne({
+                    shop: seller.shop._id
+                }).sort({ createdAt: -1 }); // Sort by creation date descending
+
+                let shouldSendEmail = false;
+                
+                if (!latestProduct) {
+                    // If no products exist, check if shop creation is older than 2 days
+                    const shopAge = currentDate - new Date(seller.shop.createdAt);
+                    shouldSendEmail = shopAge > twoDaysInMs;
+                } else {
+                    // Check if latest product is older than 2 days
+                    const timeSinceLastProduct = currentDate - new Date(latestProduct.createdAt);
+                    shouldSendEmail = timeSinceLastProduct > twoDaysInMs;
+                }
+
+                if (shouldSendEmail) {
+                    const mail_options = {
+                        emailTo: seller.email,
+                        subject: "Reminder: Add New Products to Your Shop",
+                        html: `
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <meta charset="UTF-8">
+                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            </head>
+                            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333333;">
+                                <table style="border-spacing: 0; width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                                    <!-- Header Section -->
+                                    ${EMAIL_HEADER_SECTION}
+
+                                    <!-- Body Content -->
+                                    <tr>
+                                        <td style="padding: 20px;">
+                                            <p style="">Hi ${seller.username},</p>
+                                            <h1 style="margin: 0 0 20px;">Time to Add New Products!</h1>
+                                            <p style="margin: 0 0 20px;">We noticed you haven't added any new products to your shop "${seller.shop.name}" recently. Keep your shop active and attract more customers by listing new items!</p>
+                                            <p style="text-align: left; margin: 20px 0;">
+                                                <a href="${process.env.APP_URL}/seller/dashboard" style="background-color: #47C67F; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Add Products Now</a>
+                                            </p>
+                                            <p style="margin: 0 0 20px;">Regular updates keep your shop visible and engaging to buyers.</p>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Footer Section -->
+                                    ${EMAIL_FOOTER_SECTION}
+
+                                </table>
+                            </body>
+                            </html>
+                        `,
+                    };
+
+                    await sendEmail(mail_options);
+                    console.log(`Email reminder sent to ${seller.email}`);
+                }
+            } catch (userError) {
+                console.error(`Error processing seller ${seller.email}:`, userError);
+                continue; // Continue with next seller if one fails
+            }
+        }
+
+        console.log('Product listing reminder check completed');
+    } catch (error) {
+        console.error('Error in checkLastProductListingAndSendEmailAlert:', error);
+        throw error; // Let the cron job handle the error
+    }
+};

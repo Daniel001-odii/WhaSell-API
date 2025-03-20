@@ -30,4 +30,6 @@ router.get('/user/webhook/paystack', userController.paystackWebhook);
 router.get('/user/coin_purchase/:ref/status', protect, userController.checkPaymentStatus);
 
 
+router.get('/user/reminders/product_alert', userController.checkLastProductListingAndSendEmailAlert);
+
 module.exports = router;
