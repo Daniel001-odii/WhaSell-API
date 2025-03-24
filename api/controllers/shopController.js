@@ -586,50 +586,6 @@ exports.getShopsInNearByStates = async (req, res) => {
 };
 
 
-// get glips from followed shops...
-/* exports.getGlipsByFollowedShops = async (req, res) => {
-    try{
-        const user_id = req.user;
-        const user = await userModel.findById(user_id);
-
-        const followed_shops = await shopModel.find({ _id: { $in: user.followed_shops }});
-
-        const shopHeaderImages = await Product.aggregate([
-            {
-                $match: { images: { $exists: true, $ne: [] } } // Ensure products have images
-            },
-            {
-                $sort: { createdAt: -1 } // Sort products by most recent first
-            },
-            {
-                $group: {
-                    _id: "$shop", // Group by shop ID
-                    firstImage: { $first: "$images" } // Take the first image from the most recent product
-                }
-            }
-        ]);
-
-        // Map shops to include the headerImage [NEW]
-        const shops = followed_shops.map(shop => {
-            const headerImageEntry = shopHeaderImages.find(entry => String(entry._id) === String(shop._id));
-            return {
-                ...shop.toObject(),
-                headerImage: headerImageEntry ? headerImageEntry.firstImage : null
-            };
-        });
-        
-        const glips = await glipModel.find({ shop: { $in: user.followed_shops }}).populate("shop name");
-
-        res.status(200).json({ glips, followed_shops, shops });
-       
- 
-    }catch(error){
-        res.status(500).json({ message: "error getting glips from followed shops"});
-    }
-};
- */
-
-
 exports.getAllGlips = async (req, res) => {
     try {
         const glips = await glipModel.find().populate("shop name");
@@ -790,6 +746,17 @@ exports.cancelShopBoost = async (req, res) => {
         console.log("Error canceling shop boost: ", error);
     }
 };
+
+exports.getUserFollowedShops = async (req, res) => {
+    try{
+        const user = req.userModel;
+        const followed_shops = await Shop.find({ _id: { $in: user.followed_shops }});
+        res.status(200).json({ followed_shops })
+    }catch(err){
+        console.log("err getting followed shops: ", err)
+        res.status(500).json({ message: "internal server error"});
+    }
+}
 
 // no_of_days
 // shop_name

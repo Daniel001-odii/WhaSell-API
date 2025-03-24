@@ -59,5 +59,7 @@ router.post("/boost_shop", protect, shopController.boostShop);
 router.post("/boost_shop/cancel", protect, shopController.cancelShopBoost);
 
 
+router.get("/followed_shops/all", protect, shopController.getUserFollowedShops);
+
 module.exports = router;
 
