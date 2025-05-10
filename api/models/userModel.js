@@ -32,6 +32,7 @@ const userSchema = new Schema({
       enum: ["buyer","seller"],
       default: "buyer"
     },
+
  
     // PROVIDER AND GOOGLE ID....
     provider: {

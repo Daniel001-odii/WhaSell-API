@@ -20,4 +20,10 @@ admin.initializeApp({
 
 const bucket = admin.storage().bucket();
 
-module.exports = { bucket };
+// Add a global variable for platform fees (percentage, e.g., 10 for 10%)
+const PLATFORM_FEE_PERCENTAGE = 10; // Change this value as needed
+
+module.exports = {
+  bucket,
+  PLATFORM_FEE_PERCENTAGE,
+};

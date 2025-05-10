@@ -9,6 +9,7 @@ const userModel = require('../models/userModel');
 
 const axios = require('axios');
 const walletModel = require('../models/walletModel');
+const CoinTransaction = require('../models/coinTransactionModel');
 require('dotenv').config();
 
 
@@ -157,7 +158,7 @@ exports.getUserWallet = async (req, res) => {
             return res.status(200).json({ wallet });
         }
 
-        wallet.transactions = wallet.transactions.reverse();
+        // wallet.transactions = wallet.transactions.reverse();
 
         res.status(200).json({ wallet });
     }catch(error){
@@ -203,80 +204,61 @@ exports.buyCoins = async (req, res) => {
         const user = await userModel.findById(userId);
         const email = user.email;
 
-        console.log("the user: ", user);
-
         const { no_of_coins } = req.body;
-
-        // calculate how much for coin purchase using platform algo..
-        const amount = (0.5 * (no_of_coins / 10) + 0.5) * 1000;
-        // const { amount } = req.body;
-
-        // Check if required fields are present
-        /* if (!email || !amount || !userId) {
-            return res.status(400).json({ message: "Email, amount, and userId are required" });
-        } */
 
         if (!no_of_coins) {
             return res.status(400).json({ message: "number of coins to purchase is required!" });
         }
 
-        if(no_of_coins < 5){
-            return res.status(400).json({ message: "sorry only minimum of 5 coins allowed!"});
-        };
+        if (no_of_coins < 5) {
+            return res.status(400).json({ message: "sorry only minimum of 5 coins allowed!" });
+        }
 
-       
+        // Calculate amount using platform algorithm
+        const amount = (0.5 * (no_of_coins / 10) + 0.5) * 1000;
+        const reference = `COIN_PURCHASE_${Date.now()}`;
 
-        const today = new Date();
-        const payment_date = today;
-
-        const reference = generateReference();
-
-         // register transaction in user's wallet..
-         const wallet = await walletModel.findOne({ user: userId });
-         wallet.transactions.push(
-             {
-                narration: 'paid purchase',
-                date: today,
-                amount,
-                reference,
-             }
-         );
-
-         await wallet.save();
+        // Create pending coin transaction
+        const coinTransaction = new CoinTransaction({
+            user: userId,
+            type: 'credit',
+            amount: no_of_coins,
+            balance_after: 0, // Will be updated after payment verification
+            reference,
+            status: 'pending',
+            narration: 'Coin purchase'
+        });
+        await coinTransaction.save();
 
         const metadata = {
             amount,
-            payment_date,
-            no_of_coins
-        }
+            payment_date: new Date(),
+            no_of_coins,
+            transaction_id: coinTransaction._id
+        };
 
-        // Initiate the payment with Paystack
-        const response = await axios.post(
+        const paystackRes = await axios.post(
             'https://api.paystack.co/transaction/initialize',
             {
                 email,
-                amount: amount * 100, // Paystack works in kobo, so multiply by 100 for Naira
+                amount: amount * 100, // Convert to kobo
                 reference,
                 metadata,
-                // http://localhost:8080/account/subscriptions?payment_status=true&payment_reference=9853dvdf45fd
-                callback_url: `${process.env.APP_URL}/account/subscriptions?payment_status=true&payment_reference=${reference}` // Where Paystack will send transaction updates
+               callback_url: `${process.env.APP_URL}/payments/verify?reference=${reference}`
             },
             {
                 headers: {
                     Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-                    'Content-Type': 'application/json'
-                }
+                    'Content-Type': 'application/json',
+                },
             }
-        ); 
+        );
 
-        // Redirect the user to Paystack's payment page
-        const { authorization_url } = response.data.data;
-        const { resp } = await response.data;
-        res.status(200).json({ payment_url: authorization_url, message: resp, reference });
-
+        const { authorization_url } = paystackRes.data.data;
+        return res.status(200).json({ payment_url: authorization_url, reference });
     } catch (error) {
-        console.error("Error initializing Paystack transaction: ", error);
-        res.status(500).json({ message: "Failed to initialize transaction" });
+        console.error('Error during coin purchase:', error.response?.data || error);
+        return res.status(500).json({ message: 'Failed to initialize coin purchase' });
     }
 };
 
@@ -303,33 +285,33 @@ axios.get(url, options)
 
 
 const creditUSerCoins = async (userId, no_of_coins_to_credit, reference, status) => {
-try {
-    const wallet = await walletModel.findOne({ user: userId });
+    try {
+        const wallet = await walletModel.findOne({ user: userId });
+        if (!wallet) {
+            throw new Error("Wallet not found for the user");
+        }
 
-    if (!wallet) {
-    throw new Error("Wallet not found for the user");
+        // Find the coin transaction
+        const coinTransaction = await CoinTransaction.findOne({ reference });
+        if (!coinTransaction) {
+            throw new Error("Transaction not found with the provided reference");
+        }
+
+        // Update transaction status
+        coinTransaction.status = status;
+        if (status === 'completed') {
+            // Update wallet balance
+            wallet.balance += Number(no_of_coins_to_credit);
+            coinTransaction.balance_after = wallet.balance;
+        }
+        await coinTransaction.save();
+        await wallet.save();
+
+        console.log("User coins credited:", userId, no_of_coins_to_credit);
+    } catch (error) {
+        console.error("Error crediting user coins:", error);
+        throw error;
     }
-
-    // Update balance
-    wallet.balance += Number(no_of_coins_to_credit);
-
-    // Find transaction by reference
-    const transaction = wallet.transactions.find((txn) => txn.reference === reference && txn.status == 'pending');
-
-    if (transaction) {
-    // Update transaction status if found
-    transaction.status = status;
-    } else {
-    throw new Error("Transaction not found with the provided reference");
-    }
-
-    await wallet.save();
-
-    console.log("User coins credited:", userId, no_of_coins_to_credit);
-} catch (error) {
-    console.error("Error crediting user coins:", error);
-    throw error;
-}
 };
   
 

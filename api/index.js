@@ -50,6 +50,9 @@ mongoose.connect(process.env.MONGODB_URI, {useNewUrlParser: true, useUnifiedTopo
 .then(() => console.log('Whasell database connected successfully'))
 .catch((err) => { console.error(err); });
 
+// Initialize cron jobs
+const { scheduleDeliveryCheck } = require('./cron/checkProductDelivery');
+scheduleDeliveryCheck();
 
 // parse requests of content-type - application/json
 app.use(express.json());
@@ -68,6 +71,7 @@ const productRoutes = require("./routes/productRoutes");
 const shopRoutes = require("./routes/shopRoutes");
 const userRoutes = require("./routes/userRoutes");
 const waitlistRoutes = require("./routes/waitlistRoutes");
+const walletRoutes = require('./routes/walletRoutes');
 
 
 
@@ -87,6 +91,7 @@ app.use('/uploads',  express.static('uploads'));
 app.use('/product-images',  express.static('product-images'));
 // app.use('/api', userRoutes);
 app.use('/api', waitlistRoutes);
+app.use('/api/wallet', walletRoutes);
 
 app.get('/', function(req, res){
   return res.send("whatsell API is live...")

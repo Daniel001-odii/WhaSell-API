@@ -5,6 +5,10 @@ const Product = require('../models/productModel');
 const Notification = require('../models/notificationModel');
 const Glip = require("../models/glipModel")
 const multer = require('multer');
+const sendEmail = require('../utils/sendEmail');
+const { EMAIL_HEADER_SECTION, EMAIL_FOOTER_SECTION } = require('../utils/emailTemplates');
+const Transaction = require('../models/transactionModel');
+const CoinTransaction = require('../models/coinTransactionModel');
 
 const upload = require('../utils/uploadConfig');
 
@@ -14,6 +18,9 @@ const walletModel = require('../models/walletModel');
 const { productImageUpload } = require('../utils/uploadConfig');
 const { initializeFormidable } = require('../config/formidable.config');
 
+const axios = require('axios');
+// const { PLATFORM_FEE_PERCENTAGE } = require('../config/firebase.config');
+const PLATFORM_FEE_PERCENTAGE = 2;
 
 // Set up multer storage configuration
 const storage = multer.diskStorage({
@@ -206,7 +213,7 @@ exports.getProductById = async (req, res) => {
       .populate({
         path: "shop",
         populate: {
-          path:"owner"
+          path: "owner",
         }
       });
 
@@ -235,12 +242,12 @@ exports.getProductById = async (req, res) => {
 
 // controller to upload product
 exports.newGlipVideo = async (req, res) => {
-    try{
+    try {
         const user_id = req.user;
         const user = await User.findById(user_id).populate();
 
         const { name, description, category, video_url, condition, price, charge_for_delivery, price_negotiable, delivery_fee, thumbnail } = req.body;
-        console.log('client: ', req.body)
+        console.log('client: ', req.body);
         const new_glip = new Glip({
             name,
             description,
@@ -255,106 +262,99 @@ exports.newGlipVideo = async (req, res) => {
             thumbnail,
         });
 
-        // perform coins deduction here and send transaction logs too...
-      // check coin balance...
-      const wallet = await walletModel.findOne({ user: user_id });
-      const user_balance = wallet.balance;
+        // Check coin balance
+        const wallet = await walletModel.findOne({ user: user_id });
+        const user_balance = wallet.balance;
 
-      // check for low coin balance...
-      if(user_balance == 0){
-          console.log("insufficient coins balance please top-up!");
-          return res.status(400).json({ message: "insufficient coin balance, please purchase more coins!"})
-      }
-      
-      // DEBIT COINS CREDITS FOR PRODUCT UPLOAD...
-      const upload_fee = 5
-      const wallet_balance = user_balance - upload_fee;
-      wallet.balance = wallet_balance;
+        if (user_balance < 5) {
+            console.log("insufficient coins balance please top-up!");
+            return res.status(400).json({ message: "insufficient coin balance, please purchase more coins!" });
+        }
 
-      const today = new Date();
-      wallet.debit_transactions.push({
-        date: today,
-        coin_amount: upload_fee,
-        narration: 'debit for product listing'
-      })
-      await wallet.save();
+        // Create coin transaction record
+        const reference = `GLIP_UPLOAD_${Date.now()}`;
+        const coinTransaction = new CoinTransaction({
+            user: user_id,
+            type: 'debit',
+            amount: 5,
+            balance_after: user_balance - 5,
+            reference,
+            status: 'completed',
+            narration: 'Debit for glip video upload'
+        });
+        await coinTransaction.save();
 
-      await new_glip.save();
+        // Update wallet balance
+        wallet.balance = user_balance - 5;
+        await wallet.save();
 
-      res.status(200).json({ message: "New glip uploaded successfully!", glip: new_glip, user });
+        await new_glip.save();
+        res.status(200).json({ message: "New glip uploaded successfully!", glip: new_glip, user });
 
-        // send a notification when new product is uploaded...
-
-    }catch(error){
-        res.status(500).json({ message: 'Error uploading glip', error});
+    } catch (error) {
+        res.status(500).json({ message: 'Error uploading glip', error });
         console.log(`error uploading glip: ${error}`);
     }
-}
+};
 
 /* 
 uploading a single product deducts 2 coins from the user's balance...
 */
 exports.newProduct = async (req, res) => {
-  try{
-      const user_id = req.user;
-      const user = await User.findById(user_id).populate();
+    try {
+        const user_id = req.user;
+        const user = await User.findById(user_id).populate();
 
-      const { name, description, category, images, condition, price, charge_for_delivery, price_negotiable, delivery_fee } = req.body;
-      // console.log('client: ', req.body);
-      console.log("user trying upload: ", user);
+        const { name, description, category, images, condition, price, charge_for_delivery, price_negotiable, delivery_fee } = req.body;
+        console.log("user trying upload: ", user);
 
+        const new_product = new Product({
+            name,
+            description,
+            category,
+            images,
+            condition,
+            price,
+            charge_for_delivery,
+            price_negotiable,
+            delivery_fee,
+            shop: user.shop._id,
+        });
 
-      const new_product = new Product({
-          name,
-          description,
-          category,
-          images,
-          condition,
-          price,
-          charge_for_delivery,
-          price_negotiable,
-          delivery_fee,
-          shop: user.shop._id,
-      });
+        // Check coin balance
+        const wallet = await walletModel.findOne({ user: user_id });
+        const user_balance = wallet.balance;
 
-      
+        if (user_balance < 2) {
+            console.log("insufficient coins balance please top-up!");
+            return res.status(400).json({ message: "insufficient coin balance, please purchase more coins!" });
+        }
 
-      // perform coins deduction here and send transaction logs too...
-      // check coin balance...
-      const wallet = await walletModel.findOne({ user: user_id });
-      const user_balance = wallet.balance;
+        // Create coin transaction record
+        const reference = `PRODUCT_UPLOAD_${Date.now()}`;
+        const coinTransaction = new CoinTransaction({
+            user: user_id,
+            type: 'debit',
+            amount: 2,
+            balance_after: user_balance - 2,
+            reference,
+            status: 'completed',
+            narration: 'Debit for product upload'
+        });
+        await coinTransaction.save();
 
-      // check for low coin balance...
-      if(user_balance == 0){
-          console.log("insufficient coins balance please top-up!");
-          return res.status(400).json({ message: "insufficient coin balance, please purchase more coins!"})
-      }
-      
-      // DEBIT COINS CREDITS FOR PRODUCT UPLOAD...
-      const upload_fee = 2
-      const wallet_balance = user_balance - upload_fee;
-      wallet.balance = wallet_balance;
+        // Update wallet balance
+        wallet.balance = user_balance - 2;
+        await wallet.save();
 
-      const today = new Date();
-      wallet.debit_transactions.push({
-        date: today,
-        coin_amount: upload_fee,
-        narration: 'debit for product listing'
-      })
-      await wallet.save();
-      await new_product.save();
+        await new_product.save();
+        res.status(200).json({ message: "New product uploaded successfully!", product: new_product, user });
 
-
-
-      res.status(200).json({ message: "New product uploaded successfully!", product: new_product, user });
-
-      // send a notification when new product is uploaded...
-
-  }catch(error){
-      res.status(500).json({ message: 'Error uploading product', error});
-      console.log(`error uploading product: ${error}`);
-  }
-}
+    } catch (error) {
+        res.status(500).json({ message: 'Error uploading product', error });
+        console.log(`error uploading product: ${error}`);
+    }
+};
 
 
 // Function to add watermark
@@ -623,7 +623,13 @@ exports.deleteProductById = async (req, res) => {
 exports.addProductToLikes = async (req, res) => {
   try {
     const product_id = req.params.product_id;
-    const product = await productModel.findById(product_id);
+    const product = await productModel.findById(product_id).populate({
+      path: 'shop',
+      populate: {
+        path: 'owner',
+        select: 'email username'
+      }
+    });
 
     if (!product) {
       return res.status(400).json({ message: "Product not found" });
@@ -643,6 +649,64 @@ exports.addProductToLikes = async (req, res) => {
       // If not liked, add the product to liked_products
       user.liked_products.push(product_id);
       await user.save();
+
+      // Create notification for product owner
+      if (product.shop && product.shop.owner) {
+        const notification = new Notification({
+          recipient: product.shop.owner._id,
+          type: 'like',
+          title: 'New Product Like',
+          message: `Someone liked your product "${product.name}"`,
+          related_product: product._id,
+          related_shop: product.shop._id,
+          metadata: {
+            product_name: product.name,
+            product_image: product.images[0]
+          }
+        });
+        await notification.save();
+
+        // Send email notification if user has email notifications enabled
+        if (product.shop.owner.email) {
+          const emailHtml = `
+            <table style="width: 100%; max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
+              ${EMAIL_HEADER_SECTION}
+              <tr>
+                <td style="padding: 20px;">
+                  <h2>Your Product Got a New Like! 🎉</h2>
+                  <p>Hello ${product.shop.owner.username},</p>
+                  <p>Great news! Someone just liked your product "${product.name}".</p>
+                  <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
+                    <p style="margin: 0;"><strong>Product Details:</strong></p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                      <li>Name: ${product.name}</li>
+                      <li>Price: ₦${product.price.toLocaleString()}</li>
+                      <li>Category: ${product.category}</li>
+                    </ul>
+                  </div>
+                  <p>Keep up the great work! This engagement helps increase your product's visibility.</p>
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${process.env.FRONTEND_URL}/product/${product._id}" style="background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block;">View Product</a>
+                  </div>
+                </td>
+              </tr>
+              ${EMAIL_FOOTER_SECTION}
+            </table>
+          `;
+
+          try {
+            await sendEmail({
+              emailTo: product.shop.owner.email,
+              subject: `New Like on Your Product: ${product.name}`,
+              html: emailHtml
+            });
+          } catch (error) {
+            console.error('Failed to send like notification email:', error);
+            // Don't fail the like operation if email fails
+          }
+        }
+      }
+
       return res.status(201).json({ is_liked: true, message: "Product added to liked products" });
     }
 
@@ -772,6 +836,279 @@ exports.getSimilarProducts = async (req, res) => {
   } catch (error) {
     console.log("Error getting similar products:", error);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+/**
+ * Checkout a single product and redirect to Paystack for payment
+ * @route POST /api/products/:product_id/checkout
+ * @body { email: string, name?: string, phone?: string, delivery_info?: object }
+ */
+exports.checkoutProduct = async (req, res) => {
+  try {
+    const { product_id } = req.params;
+    const { email, name, phone, delivery_info } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Buyer email is required' });
+    }
+
+    // Fetch product and populate shop/owner
+    const product = await Product.findById(product_id).populate({ path: 'shop', populate: { path: 'owner' } });
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    if (product.status.value === 'sold') {
+      return res.status(400).json({ message: 'Product already sold' });
+    }
+
+    const price = product.price;
+    const seller = product.shop.owner;
+    if (!seller) {
+      return res.status(400).json({ message: 'Seller not found for this product' });
+    }
+
+    // Calculate fees
+    const platformFee = (price * PLATFORM_FEE_PERCENTAGE) / 100;
+    const sellerAmount = price - platformFee;
+
+    // Create transaction record
+    const reference = `CHECKOUT_${product_id}_${Date.now()}`;
+    const transaction = new Transaction({
+      reference,
+      product: product_id,
+      buyer: {
+        email,
+        name,
+        phone
+      },
+      seller: seller._id,
+      amount: price,
+      platform_fee: platformFee,
+      seller_amount: sellerAmount,
+      delivery_info: delivery_info || null
+    });
+    await transaction.save();
+
+    // Prepare Paystack transaction
+    const metadata = {
+      transaction_id: transaction._id,
+      product_id,
+      seller_id: seller._id,
+      platform_fee_percent: PLATFORM_FEE_PERCENTAGE,
+      delivery_info: delivery_info || null,
+    };
+
+    const paystackRes = await axios.post(
+      'https://api.paystack.co/transaction/initialize',
+      {
+        email,
+        amount: price * 100, // Paystack expects amount in kobo
+        reference,
+        metadata,
+        callback_url: `${process.env.APP_URL}/payments/verify?reference=${reference}`
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    const { authorization_url } = paystackRes.data.data;
+    return res.status(200).json({ payment_url: authorization_url, reference });
+  } catch (error) {
+    console.error('Error during product checkout:', error.response?.data || error);
+    return res.status(500).json({ message: 'Failed to initialize product checkout' });
+  }
+};
+
+/**
+ * Verify product payment via Paystack and transfer funds to seller's pending_funds
+ * @route GET /api/products/paystack/verify/:reference
+ */
+exports.verifyProductPayment = async (req, res) => {
+  try {
+    const { reference } = req.query;
+    if (!reference) {
+      return res.status(400).json({ message: 'Transaction reference is required' });
+    }
+
+    // Verify payment with Paystack
+    const url = `https://api.paystack.co/transaction/verify/${reference}`;
+    const options = {
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    };
+
+    const response = await axios.get(url, options);
+    const { data } = response.data;
+    
+    if (!data) {
+      return res.status(400).json({ message: 'Invalid payment verification response' });
+    }
+
+    // Find the transaction record
+    const transaction = await Transaction.findOne({ reference });
+    if (!transaction) {
+      return res.status(404).json({ message: 'Transaction record not found' });
+    }
+
+    // If transaction is already completed, return success
+    if (transaction.status === 'completed') {
+      return res.status(200).json({ 
+        message: 'Payment already verified',
+        data: {
+          status: 'success',
+          transaction
+        }
+      });
+    }
+
+    if (data.status === 'success') {
+      const { transaction_id, product_id, seller_id, platform_fee_percent } = data.metadata;
+      const amount = data.amount / 100; // Convert from kobo to Naira
+      const platformFee = (amount * platform_fee_percent) / 100;
+      const sellerAmount = amount - platformFee;
+
+      // Update transaction record
+      transaction.status = 'completed';
+      transaction.payment_details = {
+        provider_reference: reference,
+        payment_date: new Date(),
+        payment_method: data.channel || 'card'
+      };
+      await transaction.save();
+
+      // Fetch seller's wallet and update pending_funds
+      const sellerWallet = await walletModel.findOne({ user: seller_id });
+      if (!sellerWallet) {
+        return res.status(404).json({ message: 'Seller wallet not found' });
+      }
+
+      // Update seller's pending funds
+      sellerWallet.pending_funds = (sellerWallet.pending_funds || 0) + sellerAmount;
+      await sellerWallet.save();
+
+      // Update product status
+      const product = await Product.findById(product_id).populate({
+        path: 'shop',
+        populate: {
+          path: 'owner',
+          select: 'email username'
+        }
+      });
+
+      if (!product) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+
+      // Update product status
+      product.status.value = 'sold';
+      product.status.date_of_sale = new Date();
+      product.status.amount_paid = amount;
+      await product.save();
+
+      // Send email notification to seller
+      if (product.shop?.owner?.email) {
+        const emailHtml = `
+          <table style="width: 100%; max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif;">
+            ${EMAIL_HEADER_SECTION}
+            <tr>
+              <td style="padding: 20px;">
+                <h2>Product Payment Received!</h2>
+                <p>Hello ${product.shop.owner.username},</p>
+                <p>Great news! Your product "${product.name}" has been successfully purchased.</p>
+                <p>Buyer Details:</p>
+                <ul>
+                  <li>Name: ${transaction.buyer.name || 'Not provided'}</li>
+                  <li>Email: ${transaction.buyer.email}</li>
+                  <li>Phone: ${transaction.buyer.phone || 'Not provided'}</li>
+                </ul>
+                <p>Payment Details:</p>
+                <ul>
+                  <li>Product: ${product.name}</li>
+                  <li>Amount Received: ₦${amount.toLocaleString()}</li>
+                  <li>Platform Fee: ₦${platformFee.toLocaleString()}</li>
+                  <li>Your Earnings: ₦${sellerAmount.toLocaleString()}</li>
+                  <li>Date: ${new Date().toLocaleDateString()}</li>
+                </ul>
+                ${transaction.delivery_info ? `
+                <p>Delivery Information:</p>
+                <ul>
+                  <li>Address: ${transaction.delivery_info.address}</li>
+                  <li>City: ${transaction.delivery_info.city}</li>
+                  <li>State: ${transaction.delivery_info.state}</li>
+                  <li>Phone: ${transaction.delivery_info.phone}</li>
+                  ${transaction.delivery_info.additional_notes ? `<li>Additional Notes: ${transaction.delivery_info.additional_notes}</li>` : ''}
+                </ul>
+                ` : ''}
+                <p>The funds have been added to your pending balance. Once the product is delivered and confirmed, the funds will be available in your wallet.</p>
+                <p>Please ensure to update the product status to "delivered" once you've shipped the product to the buyer.</p>
+              </td>
+            </tr>
+            ${EMAIL_FOOTER_SECTION}
+          </table>
+        `;
+
+        try {
+          await sendEmail({
+            emailTo: product.shop.owner.email,
+            subject: 'Payment Received for Your Product',
+            html: emailHtml
+          });
+          console.log(`Payment confirmation email sent to ${product.shop.owner.email} for product ${product.name}`);
+        } catch (error) {
+          console.error(`Failed to send payment confirmation email to ${product.shop.owner.email}:`, error);
+          // Don't fail the whole process if email fails
+        }
+      }
+
+      return res.status(200).json({ 
+        message: 'Payment verified and funds transferred to seller',
+        data: {
+          status: 'success',
+          transaction,
+          product: {
+            name: product.name,
+            status: product.status
+          }
+        }
+      });
+    } else {
+      // Update transaction status to failed
+      transaction.status = 'failed';
+      await transaction.save();
+
+      return res.status(400).json({ 
+        message: 'Payment verification failed',
+        data: {
+          status: 'failed',
+          transaction
+        }
+      });
+    }
+  } catch (error) {
+    console.error('Error verifying product payment:', error.response?.data || error);
+    
+    // If we have a transaction reference, try to update its status
+    if (req.query.reference) {
+      try {
+        const transaction = await Transaction.findOne({ reference: req.query.reference });
+        if (transaction) {
+          transaction.status = 'failed';
+          await transaction.save();
+        }
+      } catch (updateError) {
+        console.error('Error updating transaction status:', updateError);
+      }
+    }
+
+    return res.status(500).json({ 
+      message: 'Failed to verify payment',
+      error: error.response?.data || error.message
+    });
   }
 };
 

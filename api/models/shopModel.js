@@ -22,20 +22,17 @@ const shopSchema = new Schema({
             type: Date,
             default: Date.now(),
         }
-    }], 
+    }],
+    
+    deliver_time: {
+        max_days: Number,
+        grace_days: Number,
+    },
     
   /*   followers_count: {
         type: Number,
         default: 0
     }, */
-
-    reviews:{
-        rating: {
-            type: Number,
-            default: 0,
-        },
-        count: Number,
-    },
     views: {
         type: Number,
         default: 0,
@@ -56,9 +53,6 @@ const shopSchema = new Schema({
 
     owner: {
         type: mongoose.Schema.Types.ObjectId, ref: 'User'
-    },
-    products: {
-        type: Array,
     },
     listings: Number,
     profile: {
@@ -106,6 +100,16 @@ const shopSchema = new Schema({
         days: String,
         time: String,
     },
+
+    template_code: {
+        type: Number,
+        default: 0,
+    },
+
+    accept_payments: {
+        type: Boolean,
+        default: false,
+      },
 
 }, {timestamps: true});
 

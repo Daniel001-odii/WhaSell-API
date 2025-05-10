@@ -61,5 +61,12 @@ router.post("/boost_shop/cancel", protect, shopController.cancelShopBoost);
 
 router.get("/followed_shops/all", protect, shopController.getUserFollowedShops);
 
+
+
+router.post("/reviews/:shop_id/new", protect, shopController.addShopReview);
+
+// Get shop reviews
+router.get("/:shop_name/reviews", shopController.getShopReviews);
+
 module.exports = router;
 
