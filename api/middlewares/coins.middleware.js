@@ -13,11 +13,11 @@ const checkcoins = async (req, res, next) => {
             console.log("no wallet found!")
             return
         } 
-        const user_balance = wallet.balance;
+        const user_balance = wallet.credit_balance;
 
         // check for low coin balance...
         if(user_balance == 0){
-            console.log("insufficient coins balance, please top-up!");
+            console.log("cannot proceed with action, you have insufficient coins balance, please top-up!");
             return res.status(400).json({ message: "insufficient coin balance, please top-up!"})
         }
 

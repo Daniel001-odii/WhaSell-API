@@ -323,8 +323,11 @@ exports.editShop = async (req, res) => {
             description,
             category,
             image,
-            template_code
+            template_code,
+            accept_payments
         } = req.body.shop;
+
+        console.log("req.body: ", req.body);
 
          // check if store name already exists..
          const exisitngShop = await Shop.findOne({ name });
@@ -343,8 +346,10 @@ exports.editShop = async (req, res) => {
         if (description) shop.description = description;
         if (category) shop.category = category;
         if(template_code) shop.template_code = template_code;
+        shop.accept_payments = accept_payments;
        shop.profile.image_url = image ? image :  shop.profile.image_url;
         
+       
 
         // Save updated shop
         await shop.save();
@@ -779,7 +784,7 @@ exports.boostShop = async (req, res) => {
         }
 
 
-        if(wallet.balance < (duration * 10)){
+        if(wallet.credit_balance < (duration * 10)){
             return res.status(400).json({ message: "insufficient coins for shop boost"});
         }
 
@@ -977,14 +982,14 @@ cron.schedule('0 0 * * *', async () => {
             const owner = await User.findById(shop.owner);
             const wallet = await Wallet.findOne({ user: owner._id });
 
-            if (wallet && wallet.balance >= 10) {
+            if (wallet && wallet.credit_balance >= 10) {
                 // Create coin transaction record
                 const reference = `SHOP_BOOST_${Date.now()}`;
                 const coinTransaction = new CoinTransaction({
                     user: owner._id,
                     type: 'debit',
                     amount: 10,
-                    balance_after: wallet.balance - 10,
+                    balance_after: wallet.credit_balance - 10,
                     reference,
                     status: 'completed',
                     narration: 'Debit for shop boosting'
@@ -992,7 +997,7 @@ cron.schedule('0 0 * * *', async () => {
                 await coinTransaction.save();
 
                 // Update wallet balance
-                wallet.balance -= 10;
+                wallet.credit_balance -= 10;
                 await wallet.save();
 
                 console.log(`Deducted 10 credits from ${owner.username}'s wallet for shop ${shop.name}`);

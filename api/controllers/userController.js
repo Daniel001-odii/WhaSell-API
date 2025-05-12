@@ -69,9 +69,9 @@ exports.getUserDetails = async (req, res) => {
             await user.save();
         }
 
-        // user.credits = wallet.balance;
+        // user.credits = wallet.credit_balance;
 
-        res.status(200).json({ user, credits: wallet.balance });
+        res.status(200).json({ user, credits: wallet.credit_balance });
     }catch(error){
         console.log("error getting user detiails: ", error);
         res.status(500).json({ message: "internal server error" });
@@ -244,7 +244,7 @@ exports.buyCoins = async (req, res) => {
                 amount: amount * 100, // Convert to kobo
                 reference,
                 metadata,
-               callback_url: `${process.env.APP_URL}/payments/verify?reference=${reference}`
+               callback_url: `${process.env.APP_URL}/payments/verify?type=coin`
             },
             {
                 headers: {
@@ -301,8 +301,8 @@ const creditUSerCoins = async (userId, no_of_coins_to_credit, reference, status)
         coinTransaction.status = status;
         if (status === 'completed') {
             // Update wallet balance
-            wallet.balance += Number(no_of_coins_to_credit);
-            coinTransaction.balance_after = wallet.balance;
+            wallet.credit_balance += Number(no_of_coins_to_credit);
+            coinTransaction.balance_after = wallet.credit_balance;
         }
         await coinTransaction.save();
         await wallet.save();
@@ -318,7 +318,7 @@ const creditUSerCoins = async (userId, no_of_coins_to_credit, reference, status)
 exports.checkPaymentStatus = async (req, res) => {
     try{
         const user = req.user;
-        const reference = req.params.ref;
+        const { reference } = req.query;
 
         const url = `https://api.paystack.co/transaction/verify/${reference}`;
 
@@ -337,7 +337,7 @@ exports.checkPaymentStatus = async (req, res) => {
             // credit users coins here...
             if(response.data.data.status == 'success'){
                 try{
-                    creditUSerCoins(user, no_of_coins_to_credit, reference, 'successful');
+                    creditUSerCoins(user, no_of_coins_to_credit, reference, 'completed');
                 }catch(error){
                     return res.status(400).json({ message: "error crediting coins"});
                 }
@@ -348,6 +348,9 @@ exports.checkPaymentStatus = async (req, res) => {
                 }catch(error){
                     return res.status(400).json({ message: "error crediting coins"});
                 }
+            } else {
+                creditUSerCoins(user, 0, reference, 'failed');
+                return res.status(400).json({ message: "error crediting coins"});
             }
             return res.status(200).json({ data: response.data });
         })

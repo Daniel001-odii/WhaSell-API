@@ -264,7 +264,7 @@ exports.newGlipVideo = async (req, res) => {
 
         // Check coin balance
         const wallet = await walletModel.findOne({ user: user_id });
-        const user_balance = wallet.balance;
+        const user_balance = wallet.credit_balance;
 
         if (user_balance < 5) {
             console.log("insufficient coins balance please top-up!");
@@ -285,7 +285,7 @@ exports.newGlipVideo = async (req, res) => {
         await coinTransaction.save();
 
         // Update wallet balance
-        wallet.balance = user_balance - 5;
+        wallet.credit_balance = user_balance - 5;
         await wallet.save();
 
         await new_glip.save();
@@ -300,6 +300,33 @@ exports.newGlipVideo = async (req, res) => {
 /* 
 uploading a single product deducts 2 coins from the user's balance...
 */
+// Sample JSON for testing newProduct endpoint in Postman:
+/*
+{
+    "name": "Test Product",
+    "description": "This is a test product description",
+    "category": "Electronics",
+    "images": [
+        "https://example.com/image1.jpg",
+        "https://example.com/image2.jpg"
+    ],
+    "condition": "New", 
+    "price": 50000,
+    "charge_for_delivery": true,
+    "price_negotiable": true,
+    "delivery_fee": 2000
+}
+
+Headers required:
+Authorization: Bearer <your_jwt_token>
+
+Notes:
+- Make sure the user has sufficient coin balance (minimum 2 coins)
+- The user must have a shop created
+- Send as a POST request to /api/products/new
+- All fields are required
+*/
+
 exports.newProduct = async (req, res) => {
     try {
         const user_id = req.user;
@@ -323,7 +350,7 @@ exports.newProduct = async (req, res) => {
 
         // Check coin balance
         const wallet = await walletModel.findOne({ user: user_id });
-        const user_balance = wallet.balance;
+        const user_balance = wallet.credit_balance;
 
         if (user_balance < 2) {
             console.log("insufficient coins balance please top-up!");
@@ -344,7 +371,7 @@ exports.newProduct = async (req, res) => {
         await coinTransaction.save();
 
         // Update wallet balance
-        wallet.balance = user_balance - 2;
+        wallet.credit_balance = user_balance - 2;
         await wallet.save();
 
         await new_product.save();
@@ -861,7 +888,7 @@ exports.checkoutProduct = async (req, res) => {
       return res.status(400).json({ message: 'Product already sold' });
     }
 
-    const price = product.price;
+    const price = product.price + product.delivery_fee;
     const seller = product.shop.owner;
     if (!seller) {
       return res.status(400).json({ message: 'Seller not found for this product' });
@@ -905,7 +932,7 @@ exports.checkoutProduct = async (req, res) => {
         amount: price * 100, // Paystack expects amount in kobo
         reference,
         metadata,
-        callback_url: `${process.env.APP_URL}/payments/verify?reference=${reference}`
+        callback_url: `${process.env.APP_URL}/payments/verify?type=product`
       },
       {
         headers: {

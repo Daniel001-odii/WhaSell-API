@@ -80,13 +80,14 @@ const productSchema = new Schema(
       type: String,
       enum: ["yes", "no"],
       default: "no",
-      required: [true, "product price is required"],
+      required: [true, "delivery charge decision is required"],
     },
     delivery_fee: Number,
     price_negotiable: {
       type: String,
       enum: ["yes", "no"],
       default: "no",
+      required: [true, "price negotiability decision is required"],
     },
     shop: {
       type: mongoose.Schema.Types.ObjectId,

@@ -27,7 +27,7 @@ router.post('/user/buy_coins', protect, userController.buyCoins);
 
 router.get('/user/webhook/paystack', userController.paystackWebhook);
 
-router.get('/user/coin_purchase/:ref/status', protect, userController.checkPaymentStatus);
+router.get('/user/coin_purchase/verify', protect, userController.checkPaymentStatus);
 
 
 router.get('/user/reminders/product_alert', userController.checkLastProductListingAndSendEmailAlert);

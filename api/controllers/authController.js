@@ -88,7 +88,7 @@ const addRefferalBonus = async (refferal_code, username) => {
     const email = refferal_user.email;
 
     if (refferal_user) {
-      wallet.balance = Number(wallet.balance) + Number(refferal_bonus);
+      wallet.credit_balance = Number(wallet.credit_balance) + Number(refferal_bonus);
       wallet.transactions.push({
         status: "successful",
         amount: refferal_bonus,

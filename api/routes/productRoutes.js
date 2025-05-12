@@ -67,7 +67,7 @@ router.get('/similar/all', productController.getSimilarProducts);
 router.post('/:product_id/checkout', protect, productController.checkoutProduct);
 
 // verify product payment...
-router.get('/verify/product_payment', productController.verifyProductPayment);
+router.get('/product_payment/verify', productController.verifyProductPayment);
 
 /* 
 **
